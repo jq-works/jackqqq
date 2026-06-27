@@ -1,26 +1,73 @@
 @import "tailwindcss";
+@import "nes.css/css/nes.min.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Design Tokens Warna Neo-Brutalisme jq works */
+  --color-retro-bg: #F4F0EC;
+  --color-retro-orange: #FF5C00;
+  --color-retro-yellow: #FACC15;
+  --color-retro-lime: #A3E635;
+  --color-retro-blue: #3B82F6;
+  --color-retro-pink: #F472B6;
+
+  /* Design Tokens Font Retro */
+  --font-sans: var(--font-jakarta), sans-serif;
+  --font-syne: var(--font-syne), sans-serif;
+  --font-mono: var(--font-space-mono), monospace;
+  --font-pixel: var(--font-press-start), cursive;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@utility retro-grid {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@utility pixelated {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+@utility animate-marquee {
+  display: inline-flex;
+  animation: marquee 20s linear infinite;
+}
+
+/* Base resets yang disesuaikan */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-retro-bg);
+  color: #000000;
+}
+
+/* Tambahkan di bagian bawah file app/globals.css */
+html, body {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="2"><path d="M4.5 3v15.5l4.3-4.3 3.2 7.5 2.5-1.1-3.2-7.5h6.2z"/></svg>'), auto;
+}
+
+/* Pastikan elemen tombol / link tetap memiliki kursor pointer bergaya piksel jika diinginkan */
+a, button, [role="button"], input[type="submit"] {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="2"><path d="M4.5 3v15.5l4.3-4.3 3.2 7.5 2.5-1.1-3.2-7.5h6.2z"/></svg>'), pointer;
+}
+
+/* Ensure nes.css components inherit Next.js fonts */
+.nes-btn, 
+.nes-input, 
+.nes-textarea, 
+.nes-select, 
+.nes-table, 
+.nes-dialog, 
+.nes-container, 
+.nes-balloon,
+.nes-radios,
+.nes-checkboxes,
+.nes-list,
+.nes-badge {
+  font-family: inherit !important;
 }
