@@ -1,7 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Press+Start+2P&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap');
 @import "tailwindcss";
-@import "nes.css/css/nes.min.css";
 
 @theme {
+  /* Pemetaan Variabel Tema Secara Direktur */
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-syne: "Syne", sans-serif;
+  --font-mono: "Space Mono", monospace;
+  --font-pixel: "Press Start 2P", cursive;
+
   /* Design Tokens Warna Neo-Brutalisme jq works */
   --color-retro-bg: #F4F0EC;
   --color-retro-orange: #FF5C00;
@@ -9,14 +15,21 @@
   --color-retro-lime: #A3E635;
   --color-retro-blue: #3B82F6;
   --color-retro-pink: #F472B6;
-
-  /* Design Tokens Font Retro */
-  --font-sans: var(--font-jakarta), sans-serif;
-  --font-syne: var(--font-syne), sans-serif;
-  --font-mono: var(--font-space-mono), monospace;
-  --font-pixel: var(--font-press-start), cursive;
 }
 
+/* Reset Selektor Utama Global */
+html, body {
+  background-color: #F4F0EC;
+  color: #000000;
+  font-family: "Plus Jakarta Sans", sans-serif !important;
+}
+
+/* Mengunci Font Judul Tebal */
+h1, h2, h3, h4, .font-syne {
+  font-family: "Syne", sans-serif !important;
+}
+
+/* Utilities Pendukung Layout */
 @utility retro-grid {
   background-size: 40px 40px;
   background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
@@ -40,34 +53,11 @@
   animation: marquee 20s linear infinite;
 }
 
-/* Base resets yang disesuaikan */
-body {
-  background-color: var(--color-retro-bg);
-  color: #000000;
-}
-
-/* Tambahkan di bagian bawah file app/globals.css */
+/* Kursor Piksel Kustom Global */
 html, body {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="2"><path d="M4.5 3v15.5l4.3-4.3 3.2 7.5 2.5-1.1-3.2-7.5h6.2z"/></svg>'), auto;
 }
 
-/* Pastikan elemen tombol / link tetap memiliki kursor pointer bergaya piksel jika diinginkan */
-a, button, [role="button"], input[type="submit"] {
+a, button, [role="button"], input, textarea {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="2"><path d="M4.5 3v15.5l4.3-4.3 3.2 7.5 2.5-1.1-3.2-7.5h6.2z"/></svg>'), pointer;
-}
-
-/* Ensure nes.css components inherit Next.js fonts */
-.nes-btn, 
-.nes-input, 
-.nes-textarea, 
-.nes-select, 
-.nes-table, 
-.nes-dialog, 
-.nes-container, 
-.nes-balloon,
-.nes-radios,
-.nes-checkboxes,
-.nes-list,
-.nes-badge {
-  font-family: inherit !important;
 }
