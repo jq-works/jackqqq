@@ -1,87 +1,135 @@
 "use client";
 
-import React from "react";
-import { Server, Terminal, Trophy, ArrowUp } from "pixelarticons/react";
+import React, { useEffect, useState } from "react";
+import { Terminal, Heart } from "pixelarticons/react";
 import { playSynthSound } from "@/lib/audio";
 
 export default function SystemFooter() {
+  const [systemLoad, setSystemLoad] = useState(12);
+  
+  // 1. STATE MANAGEMENT UNTUK PERSISTENT LIKE SYSTEM
+  const [hasLiked, setHasLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(128); // Base count awal
+
+  // Efek fluktuasi RAM/CPU tiruan untuk menghidupkan suasana OS
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSystemLoad(Math.floor(Math.random() * 15) + 8);
+    }, 3000);
+
+    // Cek pangkalan data lokal browser saat komponen dimuat
+    const localLiked = localStorage.getItem("portfolio_liked");
+    if (localLiked === "true") {
+      setHasLiked(true);
+      setLikeCount(129); // Visual count naik jika sudah pernah like
+    }
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSystemClick = (type: string) => {
+    if (type === "reboot") {
+      playSynthSound("square", 180, 0.3);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      playSynthSound("sine", 660, 0.08);
+    }
+  };
+
+  // 2. HANDLER KLIK TOMBOL LIKE PORTFOLIO
+  const handleLikeClick = () => {
+    if (!hasLiked) {
+      localStorage.setItem("portfolio_liked", "true");
+      setHasLiked(true);
+      setLikeCount((prev) => prev + 1);
+      
+      // Efek akord naik retro gembira
+      playSynthSound("sine", 523.25, 0.06); 
+      setTimeout(() => playSynthSound("sine", 659.25, 0.06), 60); 
+      setTimeout(() => playSynthSound("sine", 783.99, 0.12), 120); 
+    } else {
+      localStorage.removeItem("portfolio_liked");
+      setHasLiked(false);
+      setLikeCount((prev) => prev - 1);
+      playSynthSound("sine", 392.00, 0.12); // Nada turun pembatalan
+    }
+  };
+
   return (
-    <footer className="max-w-7xl mx-auto px-4 md:px-8 mt-24 pb-12">
-      <div className="bg-black text-white border-3 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(255,92,0,1)] overflow-hidden">
+    <footer className="w-full bg-neutral-200 border-t-[3px] border-black select-none shrink-0 mt-auto z-40">
+      
+      {/* ATAS: MARQUEE STATUS SINKRONISASI (TICKER TAPE RETRO) */}
+      <div className="bg-black text-retro-lime py-1.5 border-b-2 border-black font-mono text-[10px] overflow-hidden flex items-center">
+        <div className="animate-marquee whitespace-nowrap flex gap-8">
+          <span>[SYSTEM_STATUS: STABLE]</span>
+          <span>// CORE_LOAD: {systemLoad}%</span>
+          <span>// FULL-STACK SYSTEM ENGAGED</span>
+          <span>// MULTIMEDIA MODULE: ACTIVE</span>
+          <span>// PORTFOLIO VERSION 16.2.9 READY</span>
+          <span>// MALANG, INDONESIA 2026</span>
+        </div>
+        <div className="animate-marquee whitespace-nowrap flex gap-8" aria-hidden={true}>
+          <span>[SYSTEM_STATUS: STABLE]</span>
+          <span>// CORE_LOAD: {systemLoad}%</span>
+          <span>// FULL-STACK SYSTEM ENGAGED</span>
+          <span>// MULTIMEDIA MODULE: ACTIVE</span>
+          <span>// PORTFOLIO VERSION 16.2.9 READY</span>
+          <span>// MALANG, INDONESIA 2026</span>
+        </div>
+      </div>
+
+      {/* BAWAH: OLD-SCHOOL WINDOWS TASKBAR SIMULATION */}
+      <div className="px-4 py-2.5 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
         
-        {/* Top Bar Footer */}
-        <div className="bg-neutral-900 px-4 py-2 border-b-2 border-neutral-800 flex items-center justify-between font-mono text-[10px] text-neutral-400">
-          <div className="flex items-center gap-2">
-            {/* Pixelarticons: HardDrive */}
-            <Server className="text-retro-orange w-4 h-4 block" />
-            <span>DISK_USAGE: 42.9% // PATH: /home/jackqqq/portfolio</span>
+        {/* SISI KIRI: TOMBOL START / REBOOT UTAMA */}
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-start">
+          <button
+            onClick={() => handleSystemClick("reboot")}
+            className="px-3 py-1 bg-retro-orange text-white border-[2.5px] border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer flex items-center gap-1.5 font-bold transition-all"
+          >
+            {/* Ikon Reboot Menggunakan SVG Pixel Art Murni */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" className="block text-white">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.73-.73"/>
+            </svg>
+            <span>SYS_REBOOT</span>
+          </button>
+
+          <div className="hidden md:flex items-center gap-1.5 text-neutral-500 text-[11px] border-l-2 border-neutral-400 pl-3">
+            <Terminal className="w-3.5 h-3.5 text-neutral-600 block"/>
+            <span>Ready for commands...</span>
           </div>
-          <span className="hidden sm:inline bg-retro-orange text-black font-bold px-1 rounded font-pixel text-[6px]">
-            V1.0.0-STABLE
-          </span>
         </div>
 
-        {/* Konten Utama Footer */}
-        <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        {/* SISI TENGAH: COPYRIGHT DATA HAK CIPTA */}
+        <div className="text-center font-bold text-black text-[11px] sm:text-xs">
+          © 2026{" "}
+          <span className="bg-retro-yellow px-1.5 py-0.5 border-2 border-black rounded shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+            JQ Works
+          </span>{" "}
+          // ALL RIGHTS RESERVED.
+        </div>
+
+        {/* SISI KANAN: STATUS TRAY BAR (WIDGET KECIL) */}
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
           
-          <div className="md:col-span-7 space-y-4">
-            <div className="flex items-center gap-2 text-retro-orange font-syne text-xl font-black uppercase tracking-tight">
-              {/* Pixelarticons: Command Terminal */}
-              <Terminal className="text-retro-orange w-5 h-5 block" />
-              <span>jq works // mochammad dzaky azzam</span>
-            </div>
-            <p className="font-mono text-xs text-neutral-400 leading-relaxed max-w-xl">
-              Siswa Rekayasa Perangkat Lunak (RPL) SMK Telkom Malang. Berfokus pada arsitektur kode full-stack yang bersih, pengembangan sistem IoT interaktif, serta produksi media kreatif.
-            </p>
-            
-            {/* Ticker Prestasi dengan Ikon Trofi Piksel */}
-            <div className="flex flex-wrap gap-2 pt-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-neutral-800 border border-neutral-700 rounded font-mono text-[10px] text-retro-yellow">
-                <Trophy className="w-3.5 h-3.5 block mr-1" /> Finalis FIKSI 2026 (OrchiCare)
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-neutral-800 border border-neutral-700 rounded font-mono text-[10px] text-retro-blue">
-                <Trophy className="w-3.5 h-3.5 block mr-1" /> Drone Finalis ASEAN Malaysia
-              </span>
-            </div>
-          </div>
+          {/* PERBAIKAN 1: MENGUBAH RAM MENJADI TOMBOL LIKE WEBPAGE INTERAKTIF */}
+          <button 
+            onClick={handleLikeClick}
+            className={`flex items-center gap-2 px-3 py-1 border-2 border-black rounded cursor-pointer transition-all active:translate-y-[1px] font-bold text-[11px] font-mono shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
+              hasLiked ? "bg-retro-pink text-white" : "bg-white text-black hover:bg-neutral-50"
+            }`}
+            title={hasLiked ? "Kamu menyukai website ini!" : "Sukai website ini"}
+          >
+            <Heart className={`w-4 h-4 block ${hasLiked ? "text-white fill-current animate-bounce" : "text-retro-pink"}`}/>
+            <span>LIKE: <span className="underline">{likeCount}</span></span>
+          </button>
 
-          <div className="md:col-span-5 flex flex-col sm:items-end gap-4">
-            <div className="font-mono text-xs text-left sm:text-right">
-              <span className="text-neutral-500 block">DEVELOPER METRICS via WakaTime:</span>
-              <span className="text-retro-lime font-bold">~48 hrs/week of active coding</span>
-            </div>
+          {/* LIKE button remains as the sole widget in this block */}
 
-            <div className="flex flex-wrap gap-3">
-              <a 
-                href="https://github.com/jackqqq" 
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => playSynthSound("triangle", 220, 0.08)}
-                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border-2 border-neutral-600 rounded font-mono font-bold text-xs text-white flex items-center gap-2 transition-colors shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]"
-              >
-                {/* NES.css: Github Icon */}
-                <i className="nes-icon github scale-75 block"></i> GitHub Profil
-              </a>
-              
-              <button 
-                onClick={() => {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                  playSynthSound("triangle", 220, 0.08);
-                }}
-                className="px-4 py-2 bg-retro-orange text-black font-syne font-black border-2 border-black rounded text-xs shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[0px_0px_0px_0px_rgba(0,0,0,0)] transition-all flex items-center justify-center gap-1.5"
-              >
-                BOOT_TO_TOP <ArrowUp className="w-3.5 h-3.5 block" />
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-        <div className="bg-neutral-950 px-6 py-4 border-t border-neutral-800 text-center font-mono text-[11px] text-neutral-500">
-          © {new Date().getFullYear()} JQ WORKS. ALL RIGHTS RESERVED. RUNNING ON NEXT.JS 16 & TAILWIND V4.
         </div>
 
       </div>
+
     </footer>
   );
 }

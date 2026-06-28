@@ -5,11 +5,29 @@ import InteractiveAvatar from "@/components/InteractiveAvatar";
 import ProjectSection from "@/components/ProjectSection";
 import Marquee from "@/components/Marquee";
 import GuestbookSection from "@/components/GuestbookSection";
+import AboutMe from "@/components/AboutMe";
+import Skills from "@/components/Skills";
+import Achievements from "@/components/Achievements";
 import { Terminal, Zap, Message } from "pixelarticons/react";
 import { playSynthSound } from "@/lib/audio";
 import ExperienceSection from "@/components/ExperienceSection";
+import ContactMe from "@/components/ContactMe";
+import SocialMedia from "@/components/SocialMedia";
+import BugHunterGame from "@/components/BugHunterGame";
 
 export default function HomePage() {
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sessionCounted = sessionStorage.getItem("jq_session_counted");
+      if (!sessionCounted) {
+        const current = localStorage.getItem("jq_works_visitors");
+        const count = current ? parseInt(current, 10) : 0;
+        localStorage.setItem("jq_works_visitors", String(count + 1));
+        sessionStorage.setItem("jq_session_counted", "true");
+      }
+    }
+  }, []);
+
   return (
     <main className="pb-20">
       <div className="max-w-7xl mx-auto px-4 md:px-8 pt-12 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -48,7 +66,7 @@ export default function HomePage() {
             </div>
 
             {/* H1 Headline — Syne extrabold, uppercase, orange underline */}
-            <h1 className="font-syne text-6xl font-extrabold tracking-tight leading-[1.1] text-black uppercase" style={{ marginBottom: "2.5rem" }}>
+            <h1 className="font-syne text-3xl xs:text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] text-black uppercase" style={{ marginBottom: "2.5rem" }}>
               CRAFTING DIGITAL
               <br />
               <span
@@ -62,15 +80,18 @@ export default function HomePage() {
             {/* Subtext */}
             <p className="font-sans text-base md:text-lg font-medium text-neutral-700 max-w-xl mb-8 leading-relaxed">
               Halo! Saya{" "}
-              <strong
-                className="font-mono font-bold border-2 border-black rounded px-1.5 py-0.5"
-                style={{ backgroundColor: "#FACC15", color: "#000000" }}
-              >
-                Jackqqq
-              </strong>
-              , seorang{" "}
+              <span className="inline-block">
+                <strong
+                  className="inline-block font-mono font-bold border-2 border-black rounded px-1.5 py-0.5"
+                  style={{ backgroundColor: "#FACC15", color: "#000000" }}
+                >
+                  Jackqqq
+                </strong>
+                ,
+              </span>
+              seorang{" "}
               <span className="font-bold text-black">Full-Stack Dev</span>{" "}
-              &amp; Multimedia Specialist. Saya membangun web yang skalabel
+              &amp; <span className="font-bold text-black">Multimedia Specialist</span>{" "}. Saya membangun web yang skalabel
               sekaligus visual yang{" "}
               <span
                 className="font-bold"
@@ -89,7 +110,7 @@ export default function HomePage() {
                 href="#proyek"
                 onClick={() => playSynthSound("triangle", 220, 0.08)}
                 style={{ backgroundColor: "#FF5C00", color: "#000000", textDecoration: "none" }}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 font-syne font-black border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none w-full sm:w-auto text-sm tracking-wide"
+                className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 font-syne font-black border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none w-full sm:w-auto text-xs sm:text-sm tracking-wide whitespace-nowrap"
               >
                 LIHAT PROJECT SAYA <Zap className="w-4 h-4" />
               </a>
@@ -99,7 +120,7 @@ export default function HomePage() {
                 href="#guestbook"
                 onClick={() => playSynthSound("triangle", 220, 0.08)}
                 style={{ backgroundColor: "#ffffff", color: "#000000", textDecoration: "none" }}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 font-mono font-bold border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none w-full sm:w-auto text-sm tracking-wide"
+                className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 font-mono font-bold border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none w-full sm:w-auto text-xs sm:text-sm tracking-wide whitespace-nowrap"
               >
                 TINGGALKAN PESAN <Message className="w-4 h-4" />
               </a>
@@ -133,7 +154,7 @@ export default function HomePage() {
               </div>
               <div className="flex justify-between border-b border-dashed border-neutral-300 pb-1">
                 <span>PHONE:</span>
-                <span className="font-bold text-retro-blue">+62 851-1123-2385</span>
+                <span className="font-bold text-retro-pink">+62 851-1123-2385</span>
               </div>
               <div className="pt-2 flex flex-wrap gap-1.5 justify-center">
                 <span className="px-2 py-0.5 bg-retro-lime border border-black rounded text-[10px] font-bold">#FULLSTACK</span>
@@ -195,11 +216,15 @@ export default function HomePage() {
 
       </div>
       <Marquee />
-
+      <AboutMe />
+      <Skills />
       <ProjectSection />
-      {/* Log Histori Pengalaman & Organisasi */}
+      <Achievements />
       <ExperienceSection />
       <GuestbookSection />
+      <ContactMe />
+      <SocialMedia/>
+      <BugHunterGame/>
     </main>
   );
 }

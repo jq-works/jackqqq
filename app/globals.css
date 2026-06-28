@@ -61,3 +61,22 @@ html, body {
 a, button, [role="button"], input, textarea {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="2"><path d="M4.5 3v15.5l4.3-4.3 3.2 7.5 2.5-1.1-3.2-7.5h6.2z"/></svg>'), pointer;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   HIDE GLOBAL BROWSER SCROLLBARS (SCROLL PROGRESS INDICATOR IS USED INSTEAD)
+   ────────────────────────────────────────────────────────────────────────── */
+/* Firefox & IE/Edge */
+html, body, * {
+  -ms-overflow-style: none !important;  /* IE/Edge */
+  scrollbar-width: none !important;     /* Firefox */
+}
+
+/* Chrome, Edge, Safari Webkit engines */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}

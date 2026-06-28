@@ -128,7 +128,7 @@ export default function InteractiveAvatar() {
               className="font-pixel text-white text-2xl select-none pointer-events-none"
               style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}
             >
-              JQ
+              
             </span>
           </div>
         </div>
