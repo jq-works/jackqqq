@@ -3,8 +3,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { playSynthSound, playSpawnSound } from "@/lib/audio";
+import { playSynthSound, playSpawnSound, playDragStart, playDragEnd, playKeypress } from "@/lib/audio";
 import { PenSquare, MapPin } from "pixelarticons/react";
+import ScrollReveal from "@/components/ScrollReveal";
 
 // ==========================================
 // INTERFACE & DATA TYPES
@@ -34,6 +35,8 @@ function DraggableNote({ note, constraintsRef }: DraggableNoteProps) {
       dragConstraints={constraintsRef}
       dragElastic={0.05}
       dragMomentum={false}
+      onDragStart={() => playDragStart()}
+      onDragEnd={() => playDragEnd()}
       whileDrag={{ scale: 1.05, zIndex: 50, cursor: "grabbing" }}
       style={{
         left: `${note.left}%`,
@@ -175,7 +178,8 @@ export default function GuestbookSection() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* KOLOM KIRI: FORMULIR PANEL KONTROL INPUT (5 COLS) */}
-        <div className="lg:col-span-5 bg-white border-3 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+        <ScrollReveal direction="right" delay={0.1} className="lg:col-span-5">
+          <div className="bg-white border-3 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
           <div className="px-4 py-2.5 bg-retro-pink border-b-3 border-black flex items-center gap-2">
             <PenSquare className="w-4 h-4 text-black" />
             <span className="font-mono font-bold text-xs text-black">guestbook_form.exe</span>
@@ -193,6 +197,7 @@ export default function GuestbookSection() {
                 required 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                onKeyDown={() => playKeypress()}
                 placeholder="E.g., PT Maju Mundur (HRD)" 
                 className="w-full px-3 py-2 bg-retro-bg border-3 border-black rounded font-mono text-sm focus:outline-none focus:bg-white placeholder:text-neutral-400"
               />
@@ -205,6 +210,7 @@ export default function GuestbookSection() {
                 rows={3} 
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={() => playKeypress()}
                 placeholder="Tertarik mengajak kolaborasi projek landing page bisnis..." 
                 className="w-full px-3 py-2 bg-retro-bg border-3 border-black rounded font-sans text-sm focus:outline-none focus:bg-white placeholder:text-neutral-400"
               ></textarea>
@@ -236,10 +242,12 @@ export default function GuestbookSection() {
               TEMPELKAN SEKARANG! <MapPin className="w-4 h-4 inline-block align-middle ml-1.5 -mt-0.5 shrink-0" />
             </button>
           </form>
-        </div>
+          </div>
+        </ScrollReveal>
 
         {/* KOLOM KANAN: MEJA UTAMA KANVAS WORKSPACE PAPAN CATATAN (7 COLS) */}
-        <div className="lg:col-span-7 bg-white border-3 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col h-[500px] overflow-hidden relative">
+        <ScrollReveal direction="left" delay={0.2} className="lg:col-span-7">
+          <div className="bg-white border-3 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col h-[500px] overflow-hidden relative">
           <div className="px-4 py-2.5 bg-black text-white border-b-3 border-black flex justify-between items-center">
             <span className="font-mono font-bold text-xs">jackqqq_virtual_desk.board</span>
             <span className="bg-red-500 text-white font-pixel text-[6px] px-1.5 py-0.5 rounded border border-white">STIKER INTERAKTIF</span>
@@ -260,7 +268,8 @@ export default function GuestbookSection() {
               />
             ))}
           </div>
-        </div>
+          </div>
+        </ScrollReveal>
 
       </div>
     </section>

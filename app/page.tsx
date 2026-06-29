@@ -9,11 +9,12 @@ import AboutMe from "@/components/AboutMe";
 import Skills from "@/components/Skills";
 import Achievements from "@/components/Achievements";
 import { Terminal, Zap, Message } from "pixelarticons/react";
-import { playSynthSound } from "@/lib/audio";
+import { playSynthSound, playChord, playArpeggio } from "@/lib/audio";
 import ExperienceSection from "@/components/ExperienceSection";
 import ContactMe from "@/components/ContactMe";
 import SocialMedia from "@/components/SocialMedia";
 import BugHunterGame from "@/components/BugHunterGame";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export default function HomePage() {
   React.useEffect(() => {
@@ -33,104 +34,106 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 pt-12 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Kolom Kiri: Main Welcome Box */}
-        <section className="lg:col-span-8 bg-white border-3 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <div className="flex items-center justify-between px-4 py-2.5 bg-retro-orange border-b-3 border-black">
-            <div className="flex items-center gap-2">
-              {/* Pixelarticons: Terminal */}
-              <Terminal className="text-white w-4 h-4 block" />
-              <span className="font-mono font-bold text-sm text-white">welcome_message.txt</span>
+        <ScrollReveal direction="right" className="lg:col-span-8">
+          <section className="bg-white border-3 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-retro-orange border-b-3 border-black">
+              <div className="flex items-center gap-2">
+                {/* Pixelarticons: Terminal */}
+                <Terminal className="text-white w-4 h-4 block" />
+                <span className="font-mono font-bold text-sm text-white">welcome_message.txt</span>
+              </div>
+              <div className="flex space-x-1.5">
+                <div className="w-3 h-3 bg-red-500 border-2 border-black rounded-full"></div>
+                <div className="w-3 h-3 bg-yellow-400 border-2 border-black rounded-full"></div>
+                <div className="w-3 h-3 bg-green-500 border-2 border-black rounded-full"></div>
+              </div>
             </div>
-            <div className="flex space-x-1.5">
-              <div className="w-3 h-3 bg-red-500 border-2 border-black rounded-full"></div>
-              <div className="w-3 h-3 bg-yellow-400 border-2 border-black rounded-full"></div>
-              <div className="w-3 h-3 bg-green-500 border-2 border-black rounded-full"></div>
-            </div>
-          </div>
 
-          <div className="p-6 md:p-10">
+            <div className="p-6 md:p-10">
 
-            {/* Badge: AVAILABLE FOR FREELANCE */}
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1.5 border-2 border-black rounded font-pixel text-[8px] mb-8 rotate-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-              style={{ backgroundColor: "#FACC15" }}
-            >
-              {/* Dot status inline — bypass NES.css */}
-              <span style={{ position: "relative", display: "inline-flex", width: "8px", height: "8px", flexShrink: 0 }}>
+              {/* Badge: AVAILABLE FOR FREELANCE */}
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 border-2 border-black rounded font-pixel text-[8px] mb-8 rotate-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                style={{ backgroundColor: "#FACC15" }}
+              >
+                {/* Dot status inline — bypass NES.css */}
+                <span style={{ position: "relative", display: "inline-flex", width: "8px", height: "8px", flexShrink: 0 }}>
+                  <span
+                    className="animate-ping"
+                    style={{ position: "absolute", display: "inline-flex", width: "100%", height: "100%", borderRadius: "9999px", backgroundColor: "#A3E635", opacity: 0.75 }}
+                  />
+                  <span style={{ position: "relative", display: "inline-flex", width: "8px", height: "8px", borderRadius: "9999px", backgroundColor: "#A3E635" }} />
+                </span>
+                AVAILABLE FOR FREELANCE
+              </div>
+
+              {/* H1 Headline — Syne extrabold, uppercase, orange underline */}
+              <h1 className="font-syne text-3xl xs:text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] text-black uppercase" style={{ marginBottom: "2.5rem" }}>
+                CRAFTING DIGITAL
+                <br />
                 <span
-                  className="animate-ping"
-                  style={{ position: "absolute", display: "inline-flex", width: "100%", height: "100%", borderRadius: "9999px", backgroundColor: "#A3E635", opacity: 0.75 }}
-                />
-                <span style={{ position: "relative", display: "inline-flex", width: "8px", height: "8px", borderRadius: "9999px", backgroundColor: "#A3E635" }} />
-              </span>
-              AVAILABLE FOR FREELANCE
-            </div>
-
-            {/* H1 Headline — Syne extrabold, uppercase, orange underline */}
-            <h1 className="font-syne text-3xl xs:text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] text-black uppercase" style={{ marginBottom: "2.5rem" }}>
-              CRAFTING DIGITAL
-              <br />
-              <span
-                className="px-2 rounded"
-                style={{ backgroundColor: "#FF5C00", color: "#ffffff" }}
-              >
-                PRODUCTS.
-              </span>
-            </h1>
-
-            {/* Subtext */}
-            <p className="font-sans text-base md:text-lg font-medium text-neutral-700 max-w-xl mb-8 leading-relaxed">
-              Halo! Saya{" "}
-              <span className="inline-block">
-                <strong
-                  className="inline-block font-mono font-bold border-2 border-black rounded px-1.5 py-0.5"
-                  style={{ backgroundColor: "#FACC15", color: "#000000" }}
+                  className="px-2 rounded"
+                  style={{ backgroundColor: "#FF5C00", color: "#ffffff" }}
                 >
-                  Jackqqq
-                </strong>
-                ,
-              </span>
-              seorang{" "}
-              <span className="font-bold text-black">Full-Stack Dev</span>{" "}
-              &amp; <span className="font-bold text-black">Multimedia Specialist</span>{" "}. Saya membangun web yang skalabel
-              sekaligus visual yang{" "}
-              <span
-                className="font-bold"
-                style={{ color: "#FF5C00" }}
-              >
-                berdampak nyata
-              </span>{" "}
-              melalui{" "}
-              <strong className="font-syne font-extrabold text-black">JQ Works</strong>.
-            </p>
+                  PRODUCTS.
+                </span>
+              </h1>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-3">
-              {/* Primer: Retro Orange */}
-              <a
-                href="#proyek"
-                onClick={() => playSynthSound("triangle", 220, 0.08)}
-                style={{ backgroundColor: "#FF5C00", color: "#000000", textDecoration: "none" }}
-                className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 font-syne font-black border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none w-full sm:w-auto text-xs sm:text-sm tracking-wide whitespace-nowrap"
-              >
-                LIHAT PROJECT SAYA <Zap className="w-4 h-4" />
-              </a>
+              {/* Subtext */}
+              <p className="font-sans text-base md:text-lg font-medium text-neutral-700 max-w-xl mb-8 leading-relaxed">
+                Halo! Saya{" "}
+                <span className="inline-block">
+                  <strong
+                    className="inline-block font-mono font-bold border-2 border-black rounded px-1.5 py-0.5"
+                    style={{ backgroundColor: "#FACC15", color: "#000000" }}
+                  >
+                    Jackqqq
+                  </strong>
+                  ,
+                </span>
+                seorang{" "}
+                <span className="font-bold text-black">Full-Stack Dev</span>{" "}
+                &amp; <span className="font-bold text-black">Multimedia Specialist</span>{" "}. Saya membangun web yang skalabel
+                sekaligus visual yang{" "}
+                <span
+                  className="font-bold"
+                  style={{ color: "#FF5C00" }}
+                >
+                  berdampak nyata
+                </span>{" "}
+                melalui{" "}
+                <strong className="font-syne font-extrabold text-black">JQ Works</strong>.
+              </p>
 
-              {/* Sekunder: Putih bersih */}
-              <a
-                href="#guestbook"
-                onClick={() => playSynthSound("triangle", 220, 0.08)}
-                style={{ backgroundColor: "#ffffff", color: "#000000", textDecoration: "none" }}
-                className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 font-mono font-bold border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none w-full sm:w-auto text-xs sm:text-sm tracking-wide whitespace-nowrap"
-              >
-                TINGGALKAN PESAN <Message className="w-4 h-4" />
-              </a>
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap gap-3">
+                {/* Primer: Retro Orange */}
+                <a
+                  href="#proyek"
+                  onClick={() => playChord(330)}
+                  style={{ backgroundColor: "#FF5C00", color: "#000000", textDecoration: "none" }}
+                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 font-syne font-black border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none w-full sm:w-auto text-xs sm:text-sm tracking-wide whitespace-nowrap"
+                >
+                  LIHAT PROJECT SAYA <Zap className="w-4 h-4" />
+                </a>
+
+                {/* Sekunder: Putih bersih */}
+                <a
+                  href="#guestbook"
+                  onClick={() => playArpeggio(220, 4)}
+                  style={{ backgroundColor: "#ffffff", color: "#000000", textDecoration: "none" }}
+                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 font-mono font-bold border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none w-full sm:w-auto text-xs sm:text-sm tracking-wide whitespace-nowrap"
+                >
+                  TINGGALKAN PESAN <Message className="w-4 h-4" />
+                </a>
+              </div>
+
             </div>
-
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Kolom Kanan: Avatar */}
-        <div className="lg:col-span-4 flex flex-col gap-4 w-full">
+        <ScrollReveal direction="left" className="lg:col-span-4 flex flex-col gap-4 w-full">
           <section className="bg-white border-3 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden rotate-1 hover:rotate-0 transition-all duration-300">
             <div className="px-4 py-2 bg-retro-blue border-b-3 border-black flex justify-between items-center">
               <span className="font-mono font-bold text-xs text-white">jackqqq_avatar.png</span>
@@ -212,10 +215,11 @@ export default function HomePage() {
               </div>
             </div>
           </section>
-        </div>
+        </ScrollReveal>
 
       </div>
       <Marquee />
+      
       <AboutMe />
       <Skills />
       <ProjectSection />
@@ -223,8 +227,8 @@ export default function HomePage() {
       <ExperienceSection />
       <GuestbookSection />
       <ContactMe />
-      <SocialMedia/>
-      <BugHunterGame/>
+      <SocialMedia />
+      <BugHunterGame />
     </main>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { playSynthSound } from "@/lib/audio";
 import { PenSquare, Video, BookOpen, Terminal, Briefcase } from "pixelarticons/react";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const INITIAL_EXPERIENCES = [
   {
@@ -115,24 +116,26 @@ export default function ExperienceSection() {
     <section id="pengalaman" className="max-w-7xl mx-auto px-4 md:px-8 mt-24 scroll-mt-24 select-none">
       
       {/* Section Title */}
-      <div className="flex items-center gap-3 sm:gap-4 mb-10">
-        <div className="bg-retro-lime text-black p-3 border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" className="block text-black">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
+      <ScrollReveal direction="up" delay={0.1}>
+        <div className="flex items-center gap-3 sm:gap-4 mb-10">
+          <div className="bg-retro-lime text-black p-3 border-3 border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" className="block text-black">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="font-mono text-[10px] tracking-widest text-neutral-500 font-bold block">// PORTFOLIO_JOURNEY</span>
+            <h2 className="font-syne text-lg xs:text-xl sm:text-3xl md:text-4xl font-extrabold text-black uppercase mt-0.5 break-words">
+              TIMELINE_
+              <br className="sm:hidden" />
+              EXPERIENCE.EXE
+            </h2>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <span className="font-mono text-[10px] tracking-widest text-neutral-500 font-bold block">// PORTFOLIO_JOURNEY</span>
-          <h2 className="font-syne text-lg xs:text-xl sm:text-3xl md:text-4xl font-extrabold text-black uppercase mt-0.5 break-words">
-            TIMELINE_
-            <br className="sm:hidden" />
-            EXPERIENCE.EXE
-          </h2>
-        </div>
-      </div>
+      </ScrollReveal>
 
       {/* OS Windows Frame Style for Timeline Box */}
       <div className="bg-white border-3 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
@@ -153,8 +156,8 @@ export default function ExperienceSection() {
           {listExperiences.length > 0 ? (
             <div className="relative border-l-4 border-black pl-5 sm:pl-8 ml-2.5 sm:ml-6 py-2 space-y-10">
               {listExperiences.map((exp, idx) => (
+                <ScrollReveal key={idx} direction="left" delay={0.2 + idx * 0.15}>
                 <div 
-                  key={idx}
                   onClick={() => playSynthSound("square", 220 + idx * 60, 0.08)}
                   className="relative group cursor-pointer"
                 >
@@ -209,8 +212,8 @@ export default function ExperienceSection() {
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {exp.cards.map((card: any, cIdx: number) => (
+                            <ScrollReveal key={cIdx} direction="scale" delay={0.3 + cIdx * 0.1}>
                             <div 
-                              key={cIdx}
                               className={`${card.bgColor || "bg-retro-yellow"} border-2 border-black rounded-xl p-4 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform duration-250 flex flex-col justify-between ${
                                 cIdx % 2 === 0 ? "-rotate-1 hover:rotate-0" : "rotate-1 hover:rotate-0"
                               }`}
@@ -230,6 +233,7 @@ export default function ExperienceSection() {
                                 {card.period}
                               </span>
                             </div>
+                            </ScrollReveal>
                           ))}
                         </div>
                       </div>
@@ -237,6 +241,7 @@ export default function ExperienceSection() {
 
                   </div>
                 </div>
+                </ScrollReveal>
               ))}
             </div>
           ) : (

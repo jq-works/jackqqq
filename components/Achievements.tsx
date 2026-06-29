@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, File, Shield, Bookmark, Close, Search } from "pixelarticons/react";
+import { Trophy, File, Shield, Bookmark, Close, Search, MapPin } from "pixelarticons/react";
 import { playSynthSound } from "@/lib/audio";
+import { supabase } from "@/lib/supabase";
 
 const INITIAL_ACHIEVEMENTS = [
   {
@@ -72,17 +73,21 @@ export default function Achievements() {
   const [listPencapaian, setListPencapaian] = useState<any[]>([]);
 
   useEffect(() => {
-    const loadAchievements = () => {
-      const saved = localStorage.getItem("jq_works_achievements");
-      if (saved) {
-        try {
-          setListPencapaian(JSON.parse(saved));
-        } catch (e) {
-          localStorage.setItem("jq_works_achievements", JSON.stringify(INITIAL_ACHIEVEMENTS));
-          setListPencapaian(INITIAL_ACHIEVEMENTS);
-        }
+    const loadAchievements = async () => {
+      const { data, error } = await supabase
+        .from("achievements")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (data && data.length > 0) {
+        const mapped = data.map((item: any) => ({
+          ...item,
+          id: item.id_display || `JQ-${item.id}`,
+          color: item.color_class || "bg-retro-yellow",
+          image: item.image_url || (item.images && item.images[0]) || "/placeholder.jpg"
+        }));
+        setListPencapaian(mapped);
       } else {
-        localStorage.setItem("jq_works_achievements", JSON.stringify(INITIAL_ACHIEVEMENTS));
         setListPencapaian(INITIAL_ACHIEVEMENTS);
       }
     };
@@ -202,6 +207,11 @@ export default function Achievements() {
                     <h3 className="font-syne text-base font-extrabold text-black leading-tight uppercase tracking-tight group-hover:text-retro-blue transition-colors duration-200">
                       {item.title}
                     </h3>
+                    {item.institution && (
+                      <p className="font-mono text-[9px] font-bold text-neutral-400 uppercase mt-1 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-neutral-400 block shrink-0" /> {item.institution}
+                      </p>
+                    )}
                   </div>
 
                   <div className="border-t-2 border-dashed border-neutral-200 pt-3 flex items-center justify-between w-full font-mono">
@@ -251,7 +261,7 @@ export default function Achievements() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white border-[4px] border-black rounded-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+              className="bg-white border-[4px] border-black rounded-2xl max-w-7xl w-full h-[92vh] overflow-hidden flex flex-col relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
@@ -321,36 +331,50 @@ export default function Achievements() {
                       >
                         <div className="absolute inset-0 bg-black border-2 border-black rounded-xl translate-x-[4px] translate-y-[4px] pointer-events-none"></div>
                         
-                        <div className="relative bg-white border-2 border-black rounded-xl p-5 flex flex-col justify-between h-56 overflow-hidden">
+                        <div className="relative bg-white border-2 border-black rounded-xl p-4 flex flex-col justify-between h-[340px] overflow-hidden">
                           <div className="absolute top-0 inset-x-0 h-2 bg-neutral-900 border-b border-black flex">
                             <div className={`w-1/3 h-full ${item.color} border-r border-black`}></div>
                             <div className="w-1/3 h-full bg-neutral-800 border-r border-black"></div>
                           </div>
 
-                          <div className="pt-1.5 flex items-start justify-between w-full font-mono text-[8px] font-bold text-neutral-400 uppercase">
+                          {/* Image Thumbnail */}
+                          <div className="w-full h-32 mt-2 relative bg-neutral-900 border border-black rounded overflow-hidden flex items-center justify-center shrink-0">
+                            {item.image ? (
+                              <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">// NO_IMAGE</span>
+                            )}
+                          </div>
+
+                          <div className="pt-2.5 flex items-start justify-between w-full font-mono text-[10px] font-bold text-neutral-400 uppercase">
                             <span>ID: {item.id}</span>
-                            <span className="bg-black text-white px-1.5 py-0.5 rounded font-extrabold">
+                            <span className="bg-black text-white px-2 py-0.5 rounded font-extrabold text-[9px]">
                               {item.year}
                             </span>
                           </div>
 
-                          <div className="my-auto space-y-1.5">
-                            <div className="flex gap-1 items-center">
-                              <span className="font-mono text-[8px] font-black text-retro-orange tracking-wide bg-retro-orange/10 px-1 py-0.5 rounded border border-retro-orange/20 uppercase">
+                          <div className="my-1.5 space-y-1.5 flex-1 flex flex-col justify-center">
+                            <div className="flex gap-1.5 items-center flex-wrap">
+                              <span className="font-mono text-[9px] font-black text-retro-orange tracking-wide bg-retro-orange/10 px-1.5 py-0.5 rounded border border-retro-orange/20 uppercase">
                                 {item.tag}
                               </span>
-                              <span className="font-mono text-[8px] font-black text-neutral-400 border border-neutral-300 bg-neutral-100 px-1 py-0.5 rounded uppercase">
+                              <span className="font-mono text-[9px] font-black text-neutral-500 border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 rounded uppercase">
                                 {item.type}
                               </span>
                             </div>
-                            <h3 className="font-syne text-xs font-black text-black leading-tight uppercase group-hover:text-retro-blue">
+                            <h3 className="font-syne text-[13px] font-black text-black leading-tight uppercase group-hover:text-retro-blue line-clamp-2">
                               {item.title}
                             </h3>
+                            {item.institution && (
+                               <p className="font-mono text-[9px] font-semibold text-neutral-400 uppercase mt-0.5 flex items-center gap-1 truncate">
+                                 <MapPin className="w-3 h-3 text-neutral-400 block shrink-0" /> {item.institution}
+                               </p>
+                             )}
                           </div>
 
                           <div className="border-t border-dashed border-neutral-200 pt-2 flex items-center justify-between w-full font-mono">
                             <div>
-                              <span className="text-[10px] font-black text-black tracking-tighter uppercase block">
+                              <span className="text-[11px] font-black text-black tracking-tighter uppercase block">
                                 {item.rank}
                               </span>
                             </div>
@@ -381,27 +405,37 @@ export default function Achievements() {
           >
             <motion.div 
               initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="bg-white p-2 border-[4px] border-black rounded-2xl max-w-2xl w-full relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+              className="bg-white p-4 border-[4px] border-black rounded-2xl max-w-3xl w-full relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-h-[92vh] flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <button 
-                className="absolute -top-3 -right-3 bg-white border-2 border-black p-1 rounded-full hover:bg-retro-pink transition-colors"
+                className="absolute -top-3 -right-3 bg-white border-2 border-black p-1 rounded-full hover:bg-retro-pink transition-colors z-10"
                 onClick={() => setSelectedCert(null)}
               >
                 <Close className="w-6 h-6" />
               </button>
-              <img 
-                src={selectedCert.image} 
-                alt={selectedCert.title} 
-                className="w-full h-auto rounded-lg border-2 border-black"
-              />
-              <div className="p-4 bg-white">
-                <h3 className="font-syne font-black text-lg uppercase text-black">
-                  {selectedCert.title}
-                </h3>
-                <p className="font-mono text-[10px] font-bold text-neutral-500 uppercase">
-                  {selectedCert.rank} // {selectedCert.year}
-                </p>
+              
+              <div className="overflow-y-auto flex-1 space-y-4 pr-1">
+                <div className="w-full max-h-[65vh] relative bg-neutral-950 border-2 border-black rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={selectedCert.image} 
+                    alt={selectedCert.title} 
+                    className="max-w-full max-h-[65vh] object-contain"
+                  />
+                </div>
+                <div className="p-1 bg-white">
+                  <h3 className="font-syne font-black text-base md:text-lg uppercase text-black leading-tight">
+                    {selectedCert.title}
+                  </h3>
+                  <p className="font-mono text-[10px] font-bold text-neutral-500 uppercase mt-1">
+                    {selectedCert.rank} // {selectedCert.year}
+                  </p>
+                  {selectedCert.institution && (
+                     <p className="font-mono text-[9px] font-black text-retro-orange uppercase mt-1.5 flex items-center gap-1">
+                       <MapPin className="w-3 h-3 text-retro-orange block shrink-0" /> Penyelenggara: {selectedCert.institution}
+                     </p>
+                   )}
+                </div>
               </div>
             </motion.div>
           </motion.div>

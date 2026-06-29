@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { Mail, Globe, ArrowRight } from "pixelarticons/react";
 import { FaWhatsapp } from "react-icons/fa6";
-import { playSynthSound } from "@/lib/audio";
+import { playSynthSound, playPowerUp, playError, playKeypress } from "@/lib/audio";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export default function ContactMe() {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ export default function ContactMe() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !message) {
-      playSynthSound("triangle", 150, 0.15);
+      playError();
       return;
     }
     setIsSubmitting(true);
@@ -23,6 +24,7 @@ export default function ContactMe() {
       setShowSuccess(true);
       setEmail("");
       setMessage("");
+      playPowerUp();
     }, 1500);
   };
 
@@ -30,25 +32,27 @@ export default function ContactMe() {
     <section id="kontak" className="max-w-7xl mx-auto px-4 md:px-8 mt-16 md:mt-24 mb-12 select-none">
       
       {/* TITLE SECTION */}
-      <div className="flex items-center gap-3 sm:gap-4 mb-10">
-        <div className="bg-retro-blue text-white p-3 border-[3px] border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0">
-          <Mail className="w-8 h-8 block text-white" />
+      <ScrollReveal direction="up" delay={0.1}>
+        <div className="flex items-center gap-3 sm:gap-4 mb-10">
+          <div className="bg-retro-blue text-white p-3 border-[3px] border-black rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0">
+            <Mail className="w-8 h-8 block text-white" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="font-pixel text-[8px] tracking-widest text-neutral-500">KONEKSI SISTEM</span>
+            <h2 className="font-syne text-lg xs:text-xl sm:text-3xl md:text-4xl font-extrabold text-black uppercase mt-1 break-words">
+              CONNECT_
+              <br className="sm:hidden" />
+              TERMINAL.IN
+            </h2>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <span className="font-pixel text-[8px] tracking-widest text-neutral-500">KONEKSI SISTEM</span>
-          <h2 className="font-syne text-lg xs:text-xl sm:text-3xl md:text-4xl font-extrabold text-black uppercase mt-1 break-words">
-            CONNECT_
-            <br className="sm:hidden" />
-            TERMINAL.IN
-          </h2>
-        </div>
-      </div>
+      </ScrollReveal>
 
       {/* MAIN BENTO LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* KOLOM KIRI: TERMINAL PROMPT */}
-        <div className="lg:col-span-7 flex flex-col h-full">
+        <ScrollReveal direction="right" delay={0.2} className="lg:col-span-7 flex flex-col h-full">
           <div className="bg-black border-[4px] border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col h-full relative">
             <div className="flex items-center justify-between px-4 py-2 bg-neutral-800 border-b-[3px] border-black shrink-0">
               <div className="flex items-center gap-2">
@@ -67,11 +71,11 @@ export default function ContactMe() {
                 </div>
                 <div className="space-y-2">
                   <label className="block font-bold text-white text-[13px]">&gt; ENTER_YOUR_EMAIL:</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@email.com" className="w-full bg-neutral-900 border-2 border-neutral-700 rounded p-3 text-white placeholder-neutral-600 outline-none focus:border-retro-lime font-mono text-xs transition-colors" />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={() => playKeypress()} placeholder="nama@email.com" className="w-full bg-neutral-900 border-2 border-neutral-700 rounded p-3 text-white placeholder-neutral-600 outline-none focus:border-retro-lime font-mono text-xs transition-colors" />
                 </div>
                 <div className="space-y-2">
                   <label className="block font-bold text-white text-[13px]">&gt; WRITE_MESSAGE_DATA:</label>
-                  <textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Ketik detail rencana proyek atau pesanmu di sini..." className="w-full bg-neutral-900 border-2 border-neutral-700 rounded p-3 text-white placeholder-neutral-600 outline-none focus:border-retro-lime font-mono text-xs resize-none transition-colors" />
+                  <textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={() => playKeypress()} placeholder="Ketik detail rencana proyek atau pesanmu di sini..." className="w-full bg-neutral-900 border-2 border-neutral-700 rounded p-3 text-white placeholder-neutral-600 outline-none focus:border-retro-lime font-mono text-xs resize-none transition-colors" />
                 </div>
               </div>
               <button type="submit" disabled={isSubmitting} className="w-full md:w-auto self-end px-6 py-2.5 bg-retro-lime text-black border-[3px] border-black rounded font-mono font-black shadow-[3px_3px_0px_0px_rgba(255,255,255,0.2)] hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-white transition-all cursor-pointer flex items-center justify-center gap-2">
@@ -80,13 +84,14 @@ export default function ContactMe() {
               </button>
             </form>
           </div>
-        </div>
+        </ScrollReveal>
 
-        {/* KOLOM KANAN: DIGITAL HUB & KUNCI PERBAIKAN SEPERTI image_345c3e.png */}
+        {/* KOLOM KANAN: DIGITAL HUB */}
         <div className="lg:col-span-5 flex flex-col h-full gap-4">
           
           {/* Info Card Atas */}
-          <div className="bg-retro-pink border-[3px] border-black rounded-lg p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col justify-between">
+          <ScrollReveal direction="left" delay={0.3} className="flex-1">
+            <div className="bg-retro-pink border-[3px] border-black rounded-lg p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col justify-between h-full">
             <div>
               <div className="flex justify-between items-start mb-3">
                 <span className="font-pixel text-[6px] bg-black text-white px-1.5 py-0.5 rounded border border-white">HQ_MALANG</span>
@@ -104,9 +109,10 @@ export default function ContactMe() {
               <span>STAY_CONNECTED_ALWAYS</span>
             </div>
           </div>
+          </ScrollReveal>
 
-          {/* FIX: BARISAN INI DIKEMBALIKAN WARNA HIJAU DAN STRUKTUR UTUH NYA */}
-          {/* PERBAIKAN TOTAL: MEMAKSA WARNA DAN VISIBILITAS MENGGUNAKAN INLINE STYLE */}
+          {/* WhatsApp CTA */}
+          <ScrollReveal direction="left" delay={0.4}>
 <a
   href="https://wa.me/6285111232385"
   target="_blank"
@@ -143,6 +149,7 @@ export default function ContactMe() {
     LIVE ↗
   </span>
 </a>
+          </ScrollReveal>
 
         </div>
       </div>
