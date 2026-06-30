@@ -2,8 +2,60 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Briefcase, Search } from "pixelarticons/react";
+import { Briefcase, Search, Folder } from "pixelarticons/react";
 import { ProjectCard } from "./ProjectCard";
+
+function ProjectCardSkeleton() {
+  return (
+    <article className="bg-white border-3 border-black rounded-lg shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col justify-between h-full relative animate-pulse select-none">
+      <div>
+        {/* TOP WINDOW BAR */}
+        <div className="flex items-center justify-between border-b-3 border-black p-3 bg-neutral-300 shadow-[inset_0_-2px_0_rgba(0,0,0,0.1)]">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="flex gap-1.5 flex-shrink-0">
+              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400 border border-black inline-block"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400 border border-black inline-block"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400 border border-black inline-block"></div>
+            </div>
+            <div className="h-3.5 w-24 bg-neutral-400 border border-black rounded-sm"></div>
+          </div>
+          <div className="bg-neutral-400 border-2 border-black rounded-sm w-16 h-5"></div>
+        </div>
+
+        {/* PROJECT BODY */}
+        <div className="p-6">
+          <div className="w-full h-48 bg-neutral-200 border-3 border-black rounded shadow-[inset_4px_4px_0px_rgba(0,0,0,0.15)] mb-5 overflow-hidden flex items-center justify-center relative retro-grid shrink-0">
+            <div className="bg-white border-2 border-black p-2.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center">
+              <Folder className="w-6 h-6 text-black opacity-30 animate-pulse" />
+            </div>
+          </div>
+
+          <div className="h-6 w-3/4 bg-neutral-300 border-2 border-black rounded-sm mb-4"></div>
+          <div className="space-y-2 mb-5">
+            <div className="h-3.5 w-full bg-neutral-200 border border-black/10 rounded-sm"></div>
+            <div className="h-3.5 w-5/6 bg-neutral-200 border border-black/10 rounded-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* FOOTER AREA */}
+      <div className="px-6 pb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
+          <div className="h-6 w-16 bg-neutral-200 border-2 border-black rounded-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"></div>
+          <div className="h-6 w-14 bg-neutral-200 border-2 border-black rounded-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"></div>
+        </div>
+
+        <div className="flex flex-row items-center justify-between border-t-2 border-black pt-4 mt-auto gap-4">
+          <div className="h-3.5 w-16 bg-neutral-300 rounded-sm"></div>
+          <div className="flex flex-row items-center gap-3">
+            <div className="w-20 h-7 bg-neutral-200 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"></div>
+            <div className="w-20 h-7 bg-neutral-300 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export default function ProjectSection() {
   const [listProyek, setListProyek] = useState<any[]>([]);
@@ -148,7 +200,11 @@ if (projData) {
 
       {/* Tampilan Etalase Grid */}
       {loading ? (
-        <div className="text-center py-20 font-mono text-xs tracking-widest animate-pulse text-neutral-400">// CONNECTING_TO_DATABASE_NODE...</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <ProjectCardSkeleton />
+          <ProjectCardSkeleton />
+          <ProjectCardSkeleton />
+        </div>
       ) : (
         <>
           {/* Grid Layout (Tetap Maksimal 3 Card Per Baris/Halaman) */}

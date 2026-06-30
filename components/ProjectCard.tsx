@@ -50,6 +50,7 @@ export function ProjectCard({
   images = [],
 }: ProjectProps) {
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const hasImages = images && images.length > 0;
 
   const linksToRender = (customLinks && customLinks.length > 0)
@@ -76,6 +77,10 @@ export function ProjectCard({
     return () => clearInterval(interval);
   }, [hasImages, images.length]);
 
+  useEffect(() => {
+    setImgLoaded(false);
+  }, [currentImgIdx, images]);
+
   return (
     <article className="bg-white border-3 border-black rounded-lg shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden transition-all duration-300 hover:shadow-[14px_14px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 group flex flex-col justify-between h-full relative">
       <div>
@@ -101,16 +106,26 @@ export function ProjectCard({
           <div className="w-full h-48 bg-retro-bg border-3 border-black rounded shadow-[inset_4px_4px_0px_rgba(0,0,0,0.15)] mb-5 overflow-hidden flex items-center justify-center relative retro-grid shrink-0">
             <AnimatePresence mode="wait">
               {hasImages ? (
-                <motion.img
-                  key={currentImgIdx}
-                  src={images[currentImgIdx]}
-                  alt={`${title} preview`}
-                  initial={{ opacity: 0, scale: 1.02 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.4 }}
-                  className="w-full h-full object-cover"
-                />
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {!imgLoaded && (
+                    <div className="absolute inset-0 bg-neutral-200/90 animate-pulse flex items-center justify-center z-10 retro-grid">
+                      <div className="bg-white border-2 border-black p-2.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center animate-bounce">
+                        <PixelIcons.Image className="w-6 h-6 text-black animate-pulse" />
+                      </div>
+                    </div>
+                  )}
+                  <motion.img
+                    key={currentImgIdx}
+                    src={images[currentImgIdx]}
+                    alt={`${title} preview`}
+                    initial={{ opacity: 0, scale: 1.02 }}
+                    animate={{ opacity: imgLoaded ? 1 : 0, scale: imgLoaded ? 1 : 1.02 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.4 }}
+                    onLoad={() => setImgLoaded(true)}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ) : (
                 <PixelIcons.Folder className="text-black w-12 h-12 opacity-30 block" />
               )}

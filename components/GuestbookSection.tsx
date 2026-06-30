@@ -98,11 +98,13 @@ export default function GuestbookSection() {
 
   // State pangkalan data pesan lokal
   const [notes, setNotes] = useState<NoteData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
     async function fetchNotes() {
+      setLoading(true);
       const { data, error } = await supabase
         .from("guestbook_notes")
         .select("*")
@@ -115,6 +117,7 @@ export default function GuestbookSection() {
           // Fallback if db is empty or table doesn't exist yet
           setNotes(INITIAL_NOTES);
         }
+        setLoading(false);
       }
     }
 
@@ -294,13 +297,45 @@ export default function GuestbookSection() {
             </div>
 
             {/* Rendering Catatan Secara Dinamis */}
-            {notes.map((note) => (
-              <DraggableNote 
-                key={note.id} 
-                note={note} 
-                constraintsRef={deskRef} 
-              />
-            ))}
+            {loading ? (
+              [
+                { id: "skel-1", color: "bg-neutral-200/90", rotation: 2, pos_x: 20, pos_y: 20 },
+                { id: "skel-2", color: "bg-neutral-300/80", rotation: -3, pos_x: 55, pos_y: 35 },
+                { id: "skel-3", color: "bg-neutral-200/90", rotation: 1, pos_x: 35, pos_y: 50 }
+              ].map((skel) => (
+                <div
+                  key={skel.id}
+                  style={{
+                    left: `${skel.pos_x}%`,
+                    top: `${skel.pos_y}%`,
+                    rotate: `${skel.rotation}deg`,
+                  }}
+                  className={`absolute p-4 w-52 border-3 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${skel.color} animate-pulse select-none font-mono text-xs`}
+                >
+                  <div className="flex items-center justify-between border-b-2 border-black/10 pb-1.5 mb-2.5 shrink-0">
+                    <div className="h-3 w-16 bg-neutral-400/40 rounded-sm"></div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="h-2.5 w-full bg-neutral-400/30 rounded-sm"></div>
+                    <div className="h-2.5 w-5/6 bg-neutral-400/30 rounded-sm"></div>
+                    <div className="h-2.5 w-2/3 bg-neutral-400/30 rounded-sm"></div>
+                  </div>
+
+                  <div className="mt-3 flex justify-between items-center text-[8px] font-bold opacity-30 uppercase tracking-widest">
+                    <span>LOADING_NOTE</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              notes.map((note) => (
+                <DraggableNote 
+                  key={note.id} 
+                  note={note} 
+                  constraintsRef={deskRef} 
+                />
+              ))
+            )}
           </div>
           </div>
         </ScrollReveal>

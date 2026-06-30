@@ -12,6 +12,7 @@ export default function InteractiveAvatar() {
     rightY: 92.5,
   });
   const [isFlipped, setIsFlipped] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -111,16 +112,25 @@ export default function InteractiveAvatar() {
               WebkitBackfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
             }}
-            className="w-full h-full bg-retro-orange border-3 border-black rounded-full overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center"
+            className="w-full h-full bg-retro-orange border-3 border-black rounded-full overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center relative"
           >
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-neutral-200/90 animate-pulse flex items-center justify-center rounded-full z-10 retro-grid">
+                <div className="bg-white border-2 border-black p-2 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center animate-bounce">
+                  <User className="w-6 h-6 text-black animate-pulse" />
+                </div>
+              </div>
+            )}
             <Image
               src="/jackqqq_avatar.png"
               alt="Foto Dzaky"
               fill
-              className="object-cover"
+              className={`object-cover ${imgLoaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+              onLoad={() => setImgLoaded(true)}
               onError={(e) => {
                 // Fallback jika foto belum diupload: tampilkan initials
                 (e.currentTarget as HTMLImageElement).style.display = "none";
+                setImgLoaded(true);
               }}
             />
             {/* Fallback: initials jika foto belum ada */}

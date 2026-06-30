@@ -6,6 +6,41 @@ import { Trophy, File, Shield, Bookmark, Close, Search, MapPin } from "pixelarti
 import { playSynthSound } from "@/lib/audio";
 import { supabase } from "@/lib/supabase";
 
+function RetroImage({ src, alt, className, containerClassName }: { src: string; alt: string; className?: string; containerClassName?: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+    setError(false);
+  }, [src]);
+
+  return (
+    <div className={`relative ${containerClassName || "w-full h-full"}`}>
+      {!loaded && !error && (
+        <div className="absolute inset-0 bg-neutral-200/90 animate-pulse flex items-center justify-center retro-grid border border-black/10 z-10">
+          <div className="bg-white border border-black p-1.5 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center animate-bounce">
+            <Trophy className="w-4 h-4 text-black animate-pulse" />
+          </div>
+        </div>
+      )}
+      {error ? (
+        <div className="absolute inset-0 bg-neutral-100 flex items-center justify-center font-mono text-[9px] text-neutral-400 font-bold uppercase z-10">
+          // ERROR_LOAD
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+          className={`${className} ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+        />
+      )}
+    </div>
+  );
+}
+
 const INITIAL_ACHIEVEMENTS = [
   {
     title: "Drone Piloting - Steam Nexus Malaysia",
@@ -62,6 +97,7 @@ const INITIAL_ACHIEVEMENTS = [
 export default function Achievements() {
   const [selectedCert, setSelectedCert] = useState<any | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   // State for all certificates viewer modal
   const [showAllModal, setShowAllModal] = useState(false);
@@ -74,6 +110,7 @@ export default function Achievements() {
 
   useEffect(() => {
     const loadAchievements = async () => {
+      setLoading(true);
       const { data, error } = await supabase
         .from("achievements")
         .select("*")
@@ -92,6 +129,7 @@ export default function Achievements() {
       } else {
         setListPencapaian(INITIAL_ACHIEVEMENTS);
       }
+      setLoading(false);
     };
 
     loadAchievements();
@@ -109,8 +147,22 @@ export default function Achievements() {
     };
   }, []);
 
+  const skeletonMarqueeItems = Array(4).fill(null).map((_, idx) => ({
+    id: `JQ-SKELETON-${idx}`,
+    title: "LOADING_ACHIEVEMENT_DATA...",
+    rank: "LOADING...",
+    year: "XXXX",
+    color: "bg-neutral-200",
+    tag: "LOADING",
+    type: "LOADING",
+    image: "",
+    isSkeleton: true
+  }));
+
   // We duplicate the list so the infinite marquee has enough items to loop seamlessly.
-  const marqueeItems = listPencapaian.length > 0 ? [...listPencapaian, ...listPencapaian, ...listPencapaian, ...listPencapaian] : [];
+  const marqueeItems = loading
+    ? [...skeletonMarqueeItems, ...skeletonMarqueeItems]
+    : (listPencapaian.length > 0 ? [...listPencapaian, ...listPencapaian, ...listPencapaian, ...listPencapaian] : []);
 
   // Filter list based on search and selected filterType
   const filteredPencapaian = listPencapaian.filter((item) => {
@@ -166,6 +218,56 @@ export default function Achievements() {
           {marqueeItems.map((item, idx) => {
             const rotations = [-1, 1, -1.5, 0.5];
             const currentRotation = rotations[idx % rotations.length];
+
+            if (item.isSkeleton) {
+              return (
+                <div
+                  key={`${item.id}-${idx}`}
+                  style={{ transform: `rotate(${currentRotation}deg)` }}
+                  className="w-80 shrink-0 relative animate-pulse select-none"
+                >
+                  <div className="absolute inset-0 bg-black border-[3px] border-black rounded-2xl translate-x-[6px] translate-y-[6px] pointer-events-none"></div>
+                  <div className="absolute inset-0 bg-white border-[3px] border-black rounded-2xl translate-x-[3px] translate-y-[3px] pointer-events-none opacity-60"></div>
+
+                  <div className="relative bg-white border-[3px] border-black rounded-2xl p-6 flex flex-col justify-between h-64 overflow-hidden">
+                    <div className="absolute top-0 inset-x-0 h-3 bg-neutral-300 border-b-2 border-black flex">
+                      <div className="w-1/3 h-full bg-neutral-400 border-r border-black"></div>
+                      <div className="w-1/3 h-full bg-neutral-300 border-r border-black"></div>
+                    </div>
+
+                    <div className="pt-2 flex items-start justify-between w-full font-mono text-[9px] font-black text-neutral-300 uppercase">
+                      <span className="flex items-center gap-1">
+                        <File className="w-3 h-3 text-neutral-300 block" /> 
+                        ID: XXX-XXX
+                      </span>
+                      <span className="bg-neutral-200 text-neutral-400 px-2 py-0.5 rounded border border-neutral-300">
+                        XXXX
+                      </span>
+                    </div>
+
+                    <div className="my-auto space-y-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Bookmark className="w-3.5 h-3.5 text-neutral-300 block shrink-0" />
+                        <span className="h-3.5 w-16 bg-neutral-200 border border-neutral-300 rounded"></span>
+                        <span className="h-3.5 w-12 bg-neutral-200 border border-neutral-300 rounded"></span>
+                      </div>
+                      <div className="h-5 w-5/6 bg-neutral-300 border border-black/10 rounded-sm"></div>
+                      <div className="h-4 w-1/2 bg-neutral-200 border border-black/10 rounded-sm"></div>
+                    </div>
+
+                    <div className="border-t-2 border-dashed border-neutral-200 pt-3 flex items-center justify-between w-full">
+                      <div className="space-y-1">
+                        <div className="h-2.5 w-12 bg-neutral-200 rounded-sm"></div>
+                        <div className="h-4 w-24 bg-neutral-300 rounded-sm"></div>
+                      </div>
+                      <div className="w-7 h-7 rounded-full bg-neutral-100 border-2 border-neutral-300 flex items-center justify-center shrink-0">
+                        <Shield className="w-4 h-4 text-neutral-300 block" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
 
             return (
               <div
@@ -342,7 +444,7 @@ export default function Achievements() {
                           {/* Image Thumbnail */}
                           <div className="w-full h-32 mt-2 relative bg-neutral-900 border border-black rounded overflow-hidden flex items-center justify-center shrink-0">
                             {item.image ? (
-                              <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                              <RetroImage src={item.image} alt={item.title} className="w-full h-full object-cover" />
                             ) : (
                               <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">// NO_IMAGE</span>
                             )}
@@ -419,10 +521,11 @@ export default function Achievements() {
               
               <div className="overflow-y-auto flex-1 space-y-4 pr-1">
                 <div className="w-full max-h-[65vh] relative bg-neutral-950 border-2 border-black rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
+                  <RetroImage 
                     src={selectedCert.image} 
                     alt={selectedCert.title} 
-                    className="max-w-full max-h-[65vh] object-contain"
+                    className="max-w-full max-h-[65vh] object-contain mx-auto"
+                    containerClassName="w-full h-[50vh] flex items-center justify-center"
                   />
                 </div>
                 <div className="p-1 bg-white">
