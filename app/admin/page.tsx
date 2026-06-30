@@ -37,10 +37,6 @@ export default function AdminHome() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
   async function fetchStats() {
     setLoading(true);
 
@@ -79,6 +75,10 @@ export default function AdminHome() {
     });
     setLoading(false);
   }
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   const navLinks = [
     { href: "/admin", label: "🏠 Dashboard", active: true },
