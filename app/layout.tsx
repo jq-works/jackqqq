@@ -5,8 +5,13 @@ import CursorTrail from "@/components/CursorTrail";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "jq works // jackqqq - Interactive Pixel Portfolio",
-  description: "Neo-Brutalist & Retro OS Portfolio",
+  title: {
+    default: "Jackqqq - Digital Laboratory & Portfolio",
+    template: "%s | jq works"
+  },
+  description: "Portofolio interaktif bertema Retro OS & Neo-Brutalisme oleh Mochammad Dzaky Azzam (jackqqq). Menampilkan karya Full-Stack Web Development, UI/UX, dan Multimedia Creative.",
+  keywords: ["jackqqq", "jq works", "portfolio", "developer malang", "full-stack developer", "retro portfolio", "neo-brutalisme", "mochammad dzaky azzam"],
+  authors: [{ name: "Mochammad Dzaky Azzam", url: "https://github.com/jq-works" }],
 };
 
 export default function RootLayout({
