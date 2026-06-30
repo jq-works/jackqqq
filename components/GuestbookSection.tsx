@@ -6,6 +6,7 @@ import confetti from "canvas-confetti";
 import { playSynthSound, playSpawnSound, playDragStart, playDragEnd, playKeypress } from "@/lib/audio";
 import { PenSquare, MapPin } from "pixelarticons/react";
 import ScrollReveal from "@/components/ScrollReveal";
+import { supabase } from "@/lib/supabase";
 
 // ==========================================
 // INTERFACE & DATA TYPES
@@ -16,8 +17,8 @@ interface NoteData {
   message: string;
   color: string;
   rotation: number;
-  left: number;
-  top: number;
+  pos_x: number;
+  pos_y: number;
 }
 
 interface DraggableNoteProps {
@@ -39,8 +40,8 @@ function DraggableNote({ note, constraintsRef }: DraggableNoteProps) {
       onDragEnd={() => playDragEnd()}
       whileDrag={{ scale: 1.05, zIndex: 50, cursor: "grabbing" }}
       style={{
-        left: `${note.left}%`,
-        top: `${note.top}%`,
+        left: `${note.pos_x}%`,
+        top: `${note.pos_y}%`,
         rotate: note.rotation,
       }}
       className={`absolute p-4 w-52 border-3 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${note.color} cursor-grab select-none font-mono text-xs text-black`}
@@ -65,22 +66,22 @@ function DraggableNote({ note, constraintsRef }: DraggableNoteProps) {
 
 const INITIAL_NOTES: NoteData[] = [
   {
-    id: "note-1",
-    name: "budi_dev",
+    id: "initial-note-1",
+    name: "cak_bud",
     message: "Desain desktop web ini keren parah bro! Gak kaku sama sekali. 👍",
     color: "bg-retro-yellow",
     rotation: 3,
-    left: 15,
-    top: 20
+    pos_x: 15,
+    pos_y: 20
   },
   {
-    id: "note-2",
-    name: "Shinta.K",
+    id: "initial-note-2",
+    name: "moklet",
     message: "Sangat menyukai interaksi matanya yang bergerak! Kreatif.",
     color: "bg-retro-lime",
     rotation: -3,
-    left: 55,
-    top: 35
+    pos_x: 55,
+    pos_y: 35
   }
 ];
 
@@ -99,33 +100,58 @@ export default function GuestbookSection() {
   const [notes, setNotes] = useState<NoteData[]>([]);
 
   useEffect(() => {
-    const loadNotes = () => {
-      const saved = localStorage.getItem("jq_works_guestbook");
-      if (saved) {
-        try {
-          setNotes(JSON.parse(saved));
-        } catch (e) {
-          localStorage.setItem("jq_works_guestbook", JSON.stringify(INITIAL_NOTES));
+    let isMounted = true;
+
+    async function fetchNotes() {
+      const { data, error } = await supabase
+        .from("guestbook_notes")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (isMounted) {
+        if (data && data.length > 0) {
+          setNotes(data as NoteData[]);
+        } else {
+          // Fallback if db is empty or table doesn't exist yet
           setNotes(INITIAL_NOTES);
         }
-      } else {
-        localStorage.setItem("jq_works_guestbook", JSON.stringify(INITIAL_NOTES));
-        setNotes(INITIAL_NOTES);
       }
-    };
+    }
 
-    loadNotes();
+    fetchNotes();
 
-    const handleStorageUpdate = () => {
-      loadNotes();
-    };
-
-    window.addEventListener("storage", handleStorageUpdate);
-    window.addEventListener("local-guestbook-update", handleStorageUpdate);
+    // Supabase Realtime Subscription
+    const channel = supabase
+      .channel("realtime_guestbook")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "guestbook_notes" },
+        (payload) => {
+          const newNote = payload.new as NoteData;
+          if (isMounted) {
+            setNotes((prev) => {
+              if (prev.some((n) => n.id === newNote.id)) return prev;
+              if (typeof playSpawnSound === "function") playSpawnSound();
+              return [...prev, newNote];
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "guestbook_notes" },
+        (payload) => {
+          const deletedNote = payload.old as { id: string };
+          if (isMounted) {
+            setNotes((prev) => prev.filter((n) => n.id !== deletedNote.id));
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
-      window.removeEventListener("storage", handleStorageUpdate);
-      window.removeEventListener("local-guestbook-update", handleStorageUpdate);
+      isMounted = false;
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -137,7 +163,7 @@ export default function GuestbookSection() {
   ];
 
   // Handler eksekusi submit cetak catatan tempel baru
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !message) return;
 
@@ -153,24 +179,32 @@ export default function GuestbookSection() {
     }
 
     // Kalkulasi koordinat acak aman di dalam wilayah meja kerja fiksi
-    const newNote: NoteData = {
-      id: `spawned-note-${Date.now()}`,
+    const newNotePayload = {
       name: name,
       message: message,
       color: selectedColor,
       rotation: Math.floor(Math.random() * 8) - 4,
-      left: Math.floor(Math.random() * 35) + 15,
-      top: Math.floor(Math.random() * 40) + 20
+      pos_x: Math.floor(Math.random() * 35) + 15,
+      pos_y: Math.floor(Math.random() * 40) + 20
     };
 
-    const updatedNotes = [...notes, newNote];
-    setNotes(updatedNotes);
-    localStorage.setItem("jq_works_guestbook", JSON.stringify(updatedNotes));
-    window.dispatchEvent(new Event("local-guestbook-update"));
-    
     // Pembersihan isian formulir
     setName("");
     setMessage("");
+
+    // Masukkan data ke Supabase
+    const { data, error } = await supabase
+      .from("guestbook_notes")
+      .insert([newNotePayload])
+      .select();
+
+    if (data && data.length > 0) {
+      const realNote = data[0] as NoteData;
+      setNotes((prev) => {
+        if (prev.some((n) => n.id === realNote.id)) return prev;
+        return [...prev, realNote];
+      });
+    }
   };
 
   return (

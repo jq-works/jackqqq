@@ -51,7 +51,7 @@ export function playSynthSound(
 ) {
   const ctx = getCtx();
   if (!ctx) return;
-  makeOsc(ctx, type, frequency, 0.07, ctx.currentTime, duration, ctx.destination);
+  makeOsc(ctx, type, frequency, 0.2, ctx.currentTime, duration, ctx.destination);
 }
 
 // ─────────────────────────────────────────────
@@ -63,7 +63,7 @@ export function playChord(rootFreq = 330) {
   if (!ctx) return;
   const t = ctx.currentTime;
   const ratios = [1, 1.25, 1.5]; // major triad
-  ratios.forEach((r) => makeOsc(ctx, "triangle", rootFreq * r, 0.05, t, 0.18, ctx.destination));
+  ratios.forEach((r) => makeOsc(ctx, "triangle", rootFreq * r, 0.15, t, 0.18, ctx.destination));
 }
 
 // ─────────────────────────────────────────────
@@ -76,7 +76,7 @@ export function playArpeggio(rootFreq = 220, steps = 4) {
   const t = ctx.currentTime;
   const scale = [1, 1.2, 1.5, 1.8, 2, 2.4];
   for (let i = 0; i < steps; i++) {
-    makeOsc(ctx, "square", rootFreq * scale[i % scale.length], 0.045, t + i * 0.065, 0.12, ctx.destination);
+    makeOsc(ctx, "square", rootFreq * scale[i % scale.length], 0.12, t + i * 0.065, 0.12, ctx.destination);
   }
 }
 
@@ -90,10 +90,10 @@ export function playPowerUp() {
   const t = ctx.currentTime;
 
   // Sweep up
-  makeOsc(ctx, "square", 300, 0.06, t, 0.3, ctx.destination, 900);
+  makeOsc(ctx, "square", 300, 0.15, t, 0.3, ctx.destination, 900);
   // Chord hit at the end
   [660, 825, 990].forEach((f) =>
-    makeOsc(ctx, "triangle", f, 0.04, t + 0.28, 0.25, ctx.destination),
+    makeOsc(ctx, "triangle", f, 0.12, t + 0.28, 0.25, ctx.destination),
   );
 }
 
@@ -106,7 +106,7 @@ export function playClick(pitch: "low" | "mid" | "high" = "mid") {
   if (!ctx) return;
   const t = ctx.currentTime;
   const freqs = { low: 160, mid: 280, high: 440 };
-  makeOsc(ctx, "square", freqs[pitch], 0.06, t, 0.055, ctx.destination);
+  makeOsc(ctx, "square", freqs[pitch], 0.15, t, 0.055, ctx.destination);
 }
 
 // ─────────────────────────────────────────────
@@ -117,9 +117,9 @@ export function playSpawnSound() {
   if (!ctx) return;
   const t = ctx.currentTime;
   // Main sweep
-  makeOsc(ctx, "sine", 280, 0.07, t, 0.22, ctx.destination, 1400);
+  makeOsc(ctx, "sine", 280, 0.18, t, 0.22, ctx.destination, 1400);
   // Harmonic layer
-  makeOsc(ctx, "triangle", 560, 0.035, t + 0.05, 0.18, ctx.destination, 1800);
+  makeOsc(ctx, "triangle", 560, 0.09, t + 0.05, 0.18, ctx.destination, 1800);
 }
 
 // ─────────────────────────────────────────────
@@ -130,8 +130,8 @@ export function playError() {
   const ctx = getCtx();
   if (!ctx) return;
   const t = ctx.currentTime;
-  makeOsc(ctx, "sawtooth", 300, 0.07, t, 0.12, ctx.destination, 120);
-  makeOsc(ctx, "square", 250, 0.04, t + 0.08, 0.1, ctx.destination, 100);
+  makeOsc(ctx, "sawtooth", 300, 0.18, t, 0.12, ctx.destination, 120);
+  makeOsc(ctx, "square", 250, 0.1, t + 0.08, 0.1, ctx.destination, 100);
 }
 
 // ─────────────────────────────────────────────
@@ -142,8 +142,8 @@ export function playCoin() {
   const ctx = getCtx();
   if (!ctx) return;
   const t = ctx.currentTime;
-  makeOsc(ctx, "square", 988, 0.055, t, 0.075, ctx.destination);
-  makeOsc(ctx, "square", 1318, 0.055, t + 0.08, 0.1, ctx.destination);
+  makeOsc(ctx, "square", 988, 0.15, t, 0.075, ctx.destination);
+  makeOsc(ctx, "square", 1318, 0.15, t + 0.08, 0.1, ctx.destination);
 }
 
 // ─────────────────────────────────────────────
@@ -155,8 +155,8 @@ export function playNavigate(direction: "left" | "right" = "right") {
   if (!ctx) return;
   const t = ctx.currentTime;
   const base = direction === "right" ? 330 : 262;
-  makeOsc(ctx, "triangle", base, 0.05, t, 0.07, ctx.destination);
-  makeOsc(ctx, "triangle", base * 1.5, 0.03, t + 0.05, 0.06, ctx.destination);
+  makeOsc(ctx, "triangle", base, 0.15, t, 0.07, ctx.destination);
+  makeOsc(ctx, "triangle", base * 1.5, 0.08, t + 0.05, 0.06, ctx.destination);
 }
 
 // ─────────────────────────────────────────────
@@ -169,7 +169,7 @@ export function playKeypress() {
   const t = ctx.currentTime;
   // Short noise-like burst via high-freq square
   const freq = 800 + Math.random() * 400;
-  makeOsc(ctx, "square", freq, 0.025, t, 0.03, ctx.destination);
+  makeOsc(ctx, "square", freq, 0.08, t, 0.03, ctx.destination);
 }
 
 // ─────────────────────────────────────────────
@@ -179,15 +179,15 @@ export function playKeypress() {
 export function playDragStart() {
   const ctx = getCtx();
   if (!ctx) return;
-  makeOsc(ctx, "triangle", 220, 0.04, ctx.currentTime, 0.1, ctx.destination, 330);
+  makeOsc(ctx, "triangle", 220, 0.12, ctx.currentTime, 0.1, ctx.destination, 330);
 }
 
 export function playDragEnd() {
   const ctx = getCtx();
   if (!ctx) return;
   const t = ctx.currentTime;
-  makeOsc(ctx, "triangle", 440, 0.05, t, 0.05, ctx.destination, 330);
-  makeOsc(ctx, "triangle", 330, 0.03, t + 0.05, 0.08, ctx.destination);
+  makeOsc(ctx, "triangle", 440, 0.15, t, 0.05, ctx.destination, 330);
+  makeOsc(ctx, "triangle", 330, 0.1, t + 0.05, 0.08, ctx.destination);
 }
 
 // ─────────────────────────────────────────────
@@ -197,5 +197,5 @@ export function playDragEnd() {
 export function playWhoosh() {
   const ctx = getCtx();
   if (!ctx) return;
-  makeOsc(ctx, "sine", 600, 0.03, ctx.currentTime, 0.12, ctx.destination, 200);
+  makeOsc(ctx, "sine", 600, 0.1, ctx.currentTime, 0.12, ctx.destination, 200);
 }

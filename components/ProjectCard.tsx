@@ -1,9 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Folder, ExternalLink } from "pixelarticons/react";
+import * as PixelIcons from "pixelarticons/react";
 import { playSynthSound } from "@/lib/audio";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface CustomLink {
+  label: string;
+  url: string;
+  icon: string;
+}
 
 interface ProjectProps {
   title: string;
@@ -12,9 +18,23 @@ interface ProjectProps {
   tags: string[];
   githubUrl?: string;
   liveUrl?: string;
+  customLinks?: CustomLink[];
   colorClass?: string;
   year?: string;
   images?: string[];
+}
+
+function ProjectLinkIcon({ name, className, style }: { name: string; className?: string; style?: React.CSSProperties }) {
+  const pascalName = name
+    .split(/[-_\s]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+
+  const IconComponent =
+    (PixelIcons as any)[pascalName] ||
+    (PixelIcons as any)[name] ||
+    PixelIcons.ExternalLink;
+  return <IconComponent className={className} style={style} />;
 }
 
 export function ProjectCard({
@@ -24,12 +44,20 @@ export function ProjectCard({
   tags,
   githubUrl = "",
   liveUrl = "",
+  customLinks = [],
   colorClass = "bg-retro-blue",
   year = "2026",
   images = [],
 }: ProjectProps) {
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const hasImages = images && images.length > 0;
+
+  const linksToRender = (customLinks && customLinks.length > 0)
+    ? customLinks
+    : [
+        ...(githubUrl ? [{ label: "REPO_GIT", url: githubUrl, icon: "folder" }] : []),
+        ...(liveUrl ? [{ label: "LIVE_SITE", url: liveUrl, icon: "external-link" }] : [])
+      ].slice(0, 2);
 
   const tagColors = [
     "bg-retro-pink",
@@ -84,7 +112,7 @@ export function ProjectCard({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Folder className="text-black w-12 h-12 opacity-30 block" />
+                <PixelIcons.Folder className="text-black w-12 h-12 opacity-30 block" />
               )}
             </AnimatePresence>
             
@@ -123,33 +151,21 @@ export function ProjectCard({
           </span>
           
           <div className="flex flex-row items-center gap-3">
-            {/* Tombol GitHub Repo - Teks & Ikon dipaksa !text-black */}
-            {githubUrl && (
+            {linksToRender.map((link, idx) => (
               <a 
-                href={githubUrl} 
+                key={idx}
+                href={link.url} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                onClick={() => playSynthSound("triangle", 180, 0.08)} 
-                className="px-3 py-1.5 bg-white border-2 border-black rounded-none font-mono font-black text-[11px] uppercase tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-100 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex items-center gap-1.5 text-black !text-black"
+                onClick={() => playSynthSound("triangle", 180 + idx * 40, 0.08)} 
+                className={`px-3 py-1.5 border-2 border-black rounded-none font-mono font-black text-[11px] uppercase tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex items-center gap-1.5 text-black !text-black ${
+                  idx === 1 ? "bg-[#facc15] hover:bg-[#fde047]" : "bg-white hover:bg-neutral-100"
+                }`}
               >
-                <Folder className="w-3.5 h-3.5 block text-black !text-black" style={{ color: '#000000' }} /> 
-                <span className="text-black !text-black">REPO_GIT</span>
+                <ProjectLinkIcon name={link.icon} className="w-3.5 h-3.5 block text-black !text-black" style={{ color: '#000000' }} /> 
+                <span className="text-black !text-black">{link.label}</span>
               </a>
-            )}
-
-            {/* Tombol Live Site - Dipaksa bg-[#facc15], Teks & Ikon !text-black */}
-            {liveUrl && (
-              <a 
-                href={liveUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                onClick={() => playSynthSound("triangle", 220, 0.08)} 
-                className="px-3 py-1.5 bg-[#facc15] border-2 border-black rounded-none font-mono font-black text-[11px] uppercase tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#fde047] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex items-center gap-1.5 text-black !text-black"
-              >
-                <ExternalLink className="w-3.5 h-3.5 block text-black !text-black" style={{ color: '#000000' }} /> 
-                <span className="text-black !text-black">LIVE_SITE</span>
-              </a>
-            )}
+            ))}
           </div>
         </div>
 

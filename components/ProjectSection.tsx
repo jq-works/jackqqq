@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Briefcase } from "pixelarticons/react";
+import { Briefcase, Search } from "pixelarticons/react";
 import { ProjectCard } from "./ProjectCard";
 
 export default function ProjectSection() {
@@ -33,18 +33,22 @@ export default function ProjectSection() {
       const { data: projData, error } = await supabase
         .from("projects")
         .select("*")
+        .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
 
       // Di dalam components/ProjectSection.tsx bagian fetch data proyek:
 if (projData) {
-  const mappedData = projData.map((p) => ({
+  const mappedData = projData.map((p, index) => ({
     title: p.title,
     category: p.category,
     description: p.description,
     tags: p.tags,
     githubUrl: p.github_url,
-    liveUrl: p.link, // FIX: Ambil dari p.link sesuai skema Supabase kamu
-    colorClass: p.color_class || "bg-retro-blue", 
+    liveUrl: p.link,
+    customLinks: p.custom_links || [],
+    colorClass: p.color_class 
+      ? p.color_class.replace("bg-[var(--color-", "bg-").replace(")]", "") 
+      : ["bg-retro-orange", "bg-retro-yellow", "bg-retro-lime", "bg-retro-blue", "bg-retro-pink"][index % 5], 
     year: p.year,
     images: p.images || [], 
   }));
@@ -90,7 +94,7 @@ if (projData) {
   };
 
   return (
-    <section id="proyek" className="max-w-7xl mx-auto px-4 md:px-8 mt-24 select-none">
+    <section id="proyek" className="max-w-7xl mx-auto px-4 md:px-8 mt-24 select-none scroll-mt-24">
       
       {/* Header Etalase */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 border-b-4 border-black pb-6">
@@ -106,10 +110,13 @@ if (projData) {
 
         {/* Searchbar */}
         <div className="w-full md:w-80 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="w-4 h-4 text-black block" />
+          </div>
           <input
             type="text"
-            className="w-full border-3 border-black p-2.5 rounded-none bg-white text-xs font-black placeholder:text-neutral-400 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all outline-none"
-            placeholder="🔍 Cari proyek, stack tech, atau deskripsi..."
+            className="w-full border-[3px] border-black pl-9 pr-2.5 py-2.5 rounded-none bg-white text-xs font-black placeholder:text-neutral-400 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all outline-none"
+            placeholder="Cari proyek, stack tech, atau deskripsi..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -155,6 +162,7 @@ if (projData) {
                 tags={proyek.tags}
                 githubUrl={proyek.githubUrl}
                 liveUrl={proyek.liveUrl}
+                customLinks={proyek.customLinks}
                 colorClass={proyek.colorClass}
                 year={proyek.year}
                 images={proyek.images}
@@ -173,17 +181,17 @@ if (projData) {
               <button
                 onClick={goToPrevPage}
                 disabled={currentPage === 1}
-                className={`px-4 py-2 border-3 border-black rounded-none font-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                className={`px-5 py-2 font-black text-xs uppercase flex items-center justify-center gap-1.5 transition-all ${
                   currentPage === 1
-                    ? "bg-neutral-200 text-neutral-400 border-neutral-400 shadow-none cursor-not-allowed"
-                    : "bg-white text-black hover:bg-neutral-100 active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+                    ? "bg-neutral-200 text-neutral-400 border-[3px] border-neutral-400 cursor-not-allowed"
+                    : "bg-white text-black border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                 }`}
               >
                 ◀ PREV
               </button>
 
               {/* Status Halaman Tengah */}
-              <div className="px-4 py-2 bg-black text-white border-3 border-black font-black text-xs tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="px-5 py-2 bg-black text-white border-[3px] border-black font-black text-xs tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center">
                 PAGE: {currentPage} / {totalPages}
               </div>
 
@@ -191,10 +199,10 @@ if (projData) {
               <button
                 onClick={goToNextPage}
                 disabled={currentPage === totalPages}
-                className={`px-4 py-2 border-3 border-black rounded-none font-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                className={`px-5 py-2 font-black text-xs uppercase flex items-center justify-center gap-1.5 transition-all ${
                   currentPage === totalPages
-                    ? "bg-neutral-200 text-neutral-400 border-neutral-400 shadow-none cursor-not-allowed"
-                    : "bg-[#facc15] text-black hover:bg-[#fde047] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+                    ? "bg-neutral-200 text-neutral-400 border-[3px] border-neutral-400 cursor-not-allowed"
+                    : "bg-white text-black border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                 }`}
               >
                 NEXT ▶

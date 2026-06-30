@@ -1,442 +1,308 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Briefcase, Search, PenSquare, Trash } from "pixelarticons/react";
+import { Briefcase, Trophy, Home } from "pixelarticons/react";
+import { motion } from "framer-motion";
+import { playSynthSound } from "@/lib/audio";
 
-export default function AdminDashboard() {
-  const [projects, setProjects] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+export const retroSpring = {
+  type: "spring" as const,
+  stiffness: 180,
+  damping: 12,
+  mass: 0.9,
+};
+
+type StatsData = {
+  totalProjects: number;
+  featuredProjects: number;
+  totalAchievements: number;
+  prestasi: number;
+  sertifikasi: number;
+  categories: { name: string; count: number }[];
+  recentProjects: any[];
+  recentAchievements: any[];
+};
+
+export default function AdminHome() {
+  const [stats, setStats] = useState<StatsData>({
+    totalProjects: 0,
+    featuredProjects: 0,
+    totalAchievements: 0,
+    prestasi: 0,
+    sertifikasi: 0,
+    categories: [],
+    recentProjects: [],
+    recentAchievements: [],
+  });
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  
-  // State Search & Filter
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // State Manajemen Kategori Kustom
-  const [newCategoryName, setNewCategoryName] = useState("");
-
-  // State CRUD Proyek & Edit Mode
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [title, setTitle] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [description, setDescription] = useState("");
-  const [tags, setTags] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
-  const [liveUrl, setLiveUrl] = useState("");
-  const [isFeatured, setIsFeatured] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchInitialData();
+    fetchStats();
   }, []);
 
-  async function fetchInitialData() {
+  async function fetchStats() {
     setLoading(true);
-    await fetchCategories();
-    await fetchProjects();
+
+    const [projRes, achRes, catRes, recentProjRes, recentAchRes] = await Promise.all([
+      supabase.from("projects").select("id, is_featured, category"),
+      supabase.from("achievements").select("id, type"),
+      supabase.from("categories").select("name"),
+      supabase.from("projects").select("id, title, category, color_class, is_featured, images").order("created_at", { ascending: false }).limit(5),
+      supabase.from("achievements").select("id, title, type, institution, color_class, year").order("created_at", { ascending: false }).limit(5),
+    ]);
+
+    const projects = projRes.data || [];
+    const achievements = achRes.data || [];
+    const categories = catRes.data || [];
+
+    // Build category breakdown
+    const catCounts: Record<string, number> = {};
+    categories.forEach((c: any) => { catCounts[c.name] = 0; });
+    projects.forEach((p: any) => {
+      if (catCounts[p.category] !== undefined) catCounts[p.category]++;
+      else catCounts[p.category] = (catCounts[p.category] || 0) + 1;
+    });
+    const categoryBreakdown = Object.entries(catCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
+    setStats({
+      totalProjects: projects.length,
+      featuredProjects: projects.filter((p: any) => p.is_featured).length,
+      totalAchievements: achievements.length,
+      prestasi: achievements.filter((a: any) => a.type === "PRESTASI").length,
+      sertifikasi: achievements.filter((a: any) => a.type === "SERTIFIKASI").length,
+      categories: categoryBreakdown,
+      recentProjects: recentProjRes.data || [],
+      recentAchievements: recentAchRes.data || [],
+    });
     setLoading(false);
   }
 
-  async function fetchProjects() {
-    const { data } = await supabase
-      .from("projects")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setProjects(data);
-  }
-
-  async function fetchCategories() {
-    const { data } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name", { ascending: true });
-    if (data) {
-      setCategories(data);
-      if (data.length > 0 && !selectedCategory) {
-        setSelectedCategory(data[0].name);
-      }
-    }
-  }
-
-  // Tambah Kategori Kustom Baru
-  async function handleAddCategory(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newCategoryName.trim()) return;
-    
-    const formattedName = newCategoryName.trim().toUpperCase();
-    const { error } = await supabase.from("categories").insert([{ name: formattedName }]);
-    
-    if (error) {
-      alert("Gagal menambahkan kategori: " + error.message);
-    } else {
-      setNewCategoryName("");
-      await fetchCategories();
-      setSelectedCategory(formattedName);
-    }
-  }
-
-  // Hapus Kategori Kustom
-  async function handleDeleteCategory(id: number, name: string) {
-    if (!confirm(`Hapus kategori "${name}"? Proyek dengan kategori ini tidak akan terhapus, tetapi kategorinya tetap tersimpan teks.`)) return;
-    const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (!error) await fetchCategories();
-  }
-
-  // List Pilihan Warna Header Acak (Brutalist Palette)
-  const bgColors = ["bg-retro-blue", "bg-retro-orange", "bg-retro-pink", "bg-retro-purple", "bg-neutral-800"];
-
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files || e.target.files.length === 0) return;
-    setUploading(true);
-    const files = Array.from(e.target.files);
-    const uploadedUrls = [...images];
-
-    const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "your_cloud_name";
-    const UPLOAD_PRESET = "ml_default";
-
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-
-      try {
-        const response = await fetch(
-          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-          { method: "POST", body: formData }
-        );
-        const data = await response.json();
-        if (data.secure_url) uploadedUrls.push(data.secure_url);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    setImages(uploadedUrls);
-    setUploading(false);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    
-    // Validasi input wajib teks utama
-    if (!title.trim() || !description.trim()) {
-      return alert("Mohon isi Judul Proyek dan Deskripsi!");
-    }
-
-    const finalCategory = selectedCategory || (categories.length > 0 ? categories[0].name : "GENERAL");
-    const tagArray = tags.split(",").map((t) => t.trim()).filter((t) => t !== "");
-
-    // FIX: Hanya menggunakan 5 variasi warna retro kustom dari variabel CSS portofoliomu
-    const bgColors = [
-      "bg-retro-orange", // #FF5C00
-      "bg-retro-yellow", // #FACC15
-      "bg-retro-lime",   // #A3E635
-      "bg-retro-blue",   // #3B82F6
-      "bg-retro-pink"    // #F472B6
-    ];
-
-    const payload: any = {
-      title: title.trim(),
-      category: finalCategory,
-      description: description.trim(),
-      tags: tagArray,
-      github_url: githubUrl.trim() ? githubUrl.trim() : "", 
-      link: liveUrl.trim() ? liveUrl.trim() : "", 
-      is_featured: isFeatured,
-      images: images,
-      year: "2026"
-    };
-
-    if (editingId) {
-      // MODE UPDATE PROYEK (Tetap mempertahankan warna lama agar tidak berubah saat edit)
-      const { error } = await supabase
-        .from("projects")
-        .update(payload)
-        .eq("id", editingId);
-        
-      if (error) {
-        console.error(error);
-        return alert("GAGAL UPDATE DATA: " + error.message);
-      } else {
-        alert("Proyek sukses diperbarui!");
-      }
-    } else {
-      // MODE TAMBAH PROYEK BARU (Mengacak murni dari 5 palet warna di atas)
-      const randomColorClass = bgColors[Math.floor(Math.random() * bgColors.length)];
-      payload.color_class = randomColorClass;
-
-      const { error } = await supabase
-        .from("projects")
-        .insert([payload]);
-        
-      if (error) {
-        console.error(error);
-        return alert("GAGAL SIMPAN DATA: " + error.message);
-      } else {
-        alert("Proyek baru berhasil disimpan!");
-      }
-    }
-
-    resetForm();
-    await fetchProjects();
-  }
-
-  function startEdit(p: any) {
-  setEditingId(p.id);
-  setTitle(p.title);
-  setSelectedCategory(p.category || ""); // Menyinkronkan kategori proyek ke dropdown select
-  setDescription(p.description);
-  setTags(p.tags ? p.tags.join(", ") : "");
-  setGithubUrl(p.github_url || "");
-  setLiveUrl(p.live_url || "");
-  setIsFeatured(p.is_featured);
-  setImages(p.images || []);
-}
-
-  function resetForm() {
-    setEditingId(null);
-    setTitle("");
-    setDescription("");
-    setTags("");
-    setGithubUrl("");
-    setLiveUrl("");
-    setIsFeatured(false);
-    setImages([]);
-  }
-
-  async function handleDelete(id: number) {
-    if (!confirm("Hapus proyek ini?")) return;
-    const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (!error) {
-      if (editingId === id) resetForm();
-      fetchProjects();
-    }
-  }
-
-  // Filter pencarian di dashboard admin
-  const filteredProjects = projects.filter((p) =>
-    p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const navLinks = [
+    { href: "/admin", label: "🏠 Dashboard", active: true },
+    { href: "/admin/projects", label: "💼 Kelola Proyek", active: false },
+    { href: "/admin/achievements", label: "🏆 Kelola Achievements", active: false },
+    { href: "/admin/guestbook", label: "📝 Kelola Guestbook", active: false },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#F4F0EC] text-black p-6 md:p-12 font-mono text-xs select-none">
+    <div className="min-h-screen bg-[var(--color-retro-bg)] text-black p-6 md:p-12 font-mono text-xs select-none">
       
-      <header className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between border-3 border-black bg-white p-6 rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mb-10 gap-4">
-        <div className="flex items-center gap-4">
-          <div className="bg-black text-[#FACC15] p-3 border-2 border-black rounded-lg">
-            <Briefcase className="w-8 h-8 block text-[#FACC15]" />
+      {/* ── HEADER WINDOW OS STYLE ── */}
+      <motion.header 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={retroSpring}
+        className="max-w-7xl mx-auto border-[3px] border-black bg-white rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mb-10 overflow-hidden"
+      >
+        <div className="bg-[var(--color-retro-blue)] px-4 py-2 border-b-[3px] border-black flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full border-2 border-black bg-red-500" />
+            <div className="w-3 h-3 rounded-full border-2 border-black bg-yellow-400" />
+            <div className="w-3 h-3 rounded-full border-2 border-black bg-green-400" />
           </div>
-          <div>
-            <h1 className="font-syne text-2xl font-black uppercase">
-              {editingId ? "[MODE_EDIT] " : "[MODE_INPUT] "}PROJECTS_MANAGER.SYS
-            </h1>
-            <p className="text-neutral-500">// CUSTOM_CATEGORIES + SEARCHABLE_SYSTEM</p>
-          </div>
+          <span className="font-bold text-white text-[10px] tracking-widest uppercase">C:\ADMIN_DASHBOARD.EXE</span>
+          <button
+            onClick={async () => {
+              if (confirm("Keluar dari dashboard admin?")) {
+                if (typeof playSynthSound === "function") playSynthSound("sine", 392.00, 0.12);
+                await supabase.auth.signOut();
+              }
+            }}
+            className="px-2 py-0.5 bg-[var(--color-retro-pink)] text-white font-bold text-[9px] uppercase border border-black rounded shadow-[1px_1px_0px_rgba(0,0,0,1)] hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-none transition-all cursor-pointer flex items-center justify-center shrink-0"
+          >
+            LOGOUT
+          </button>
         </div>
         
-        {/* Navigation Tabs */}
-        <div className="flex gap-2 self-stretch sm:self-center">
-          <a href="/admin" className="px-3 py-1.5 border-2 border-black bg-black text-white font-bold rounded shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-neutral-800 transition-all uppercase text-[10px] flex items-center justify-center">
-            💼 Kelola Proyek
-          </a>
-          <a href="/admin/achievements" className="px-3 py-1.5 border-2 border-black bg-white text-black font-bold rounded shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-neutral-100 transition-all uppercase text-[10px] flex items-center justify-center">
-            🏆 Kelola Achievements
-          </a>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10">
-        
-        {/* PANEL KIRI: FORM PROYEK & ATUR KATEGORI */}
-        <div className="space-y-6">
+        <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-black p-3 border-[3px] border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-[-2deg]">
+              <Home className="w-8 h-8 block text-[var(--color-retro-yellow)]" />
+            </div>
+            <div>
+              <h1 className="font-syne text-2xl md:text-3xl font-black uppercase tracking-tight">System Overview</h1>
+              <p className="text-neutral-500 font-bold mt-1">// WEBSITE_ANALYTICS</p>
+            </div>
+          </div>
           
-          {/* A. FORM INPUT PROYEK */}
-          <div className="bg-white border-3 border-black p-5 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <div className="flex justify-between items-center mb-4 border-b-2 border-black pb-2">
-              <span className="font-bold uppercase text-sm">FORM_INPUT_PROYEK</span>
-              {editingId && (
-                <button type="button" onClick={resetForm} className="bg-neutral-200 border-2 border-black px-2 py-0.5 rounded font-bold">BATAL</button>
-              )}
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4 font-bold">
-              <div>
-                <label className="block mb-1">JUDUL PROYEK</label>
-                <input type="text" className="w-full border-2 border-black p-2 rounded bg-white" value={title} onChange={(e) => setTitle(e.target.value)} />
-              </div>
-              
-              {/* DROPDOWN KATEGORI DARI DATABASE */}
-              <div>
-                <label className="block mb-1">KATEGORI (PILIH NODE)</label>
-                <select className="w-full border-2 border-black p-2 rounded bg-white font-mono font-bold uppercase" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
-                  ))}
-                  {categories.length === 0 && <option value="GENERAL">GENERAL</option>}
-                </select>
-              </div>
-
-              <div>
-                <label className="block mb-1">DESKRIPSI</label>
-                <textarea rows={3} className="w-full border-2 border-black p-2 rounded bg-white font-sans" value={description} onChange={(e) => setDescription(e.target.value)} />
-              </div>
-              <div>
-                <label className="block mb-1">TAGS (Pisahkan dengan koma)</label>
-                <input type="text" className="w-full border-2 border-black p-2 rounded bg-white" value={tags} onChange={(e) => setTags(e.target.value)} />
-              </div>
-              <div>
-                <label className="block mb-1">REPO URL</label>
-                <input type="text" className="w-full border-2 border-black p-2 rounded bg-white" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
-              </div>
-              <div>
-                <label className="block mb-1">LIVE URL</label>
-                <input type="text" className="w-full border-2 border-black p-2 rounded bg-white" value={liveUrl} onChange={(e) => setLiveUrl(e.target.value)} />
-              </div>
-
-              <div>
-                <label className="block mb-1">SCREENSHOTS</label>
-                <input type="file" multiple accept="image/*" className="w-full border-2 border-black p-1 rounded bg-white text-[10px]" onChange={handleImageUpload} />
-                {uploading && <p className="text-retro-orange mt-1 animate-pulse">Uploading...</p>}
-                
-                {images.length > 0 && (
-                  <div className="grid grid-cols-4 gap-2 mt-2 border border-black p-1.5 bg-neutral-100 rounded">
-                    {images.map((img, i) => (
-                      <div key={i} className="relative aspect-video border border-black bg-white rounded overflow-hidden">
-                        <Image src={img} width={100} height={60} className="w-full h-full object-cover" alt="" unoptimized />
-                        <button type="button" onClick={() => setImages(images.filter((_, idx) => idx !== i))} className="absolute top-0 right-0 bg-red-500 text-white px-1 text-[8px]">X</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 py-1">
-                <input type="checkbox" id="feat" className="accent-black w-4 h-4" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
-                <label htmlFor="feat" className="cursor-pointer">SET SEBAGAI FEATURED</label>
-              </div>
-
-              <button type="submit" className="w-full bg-retro-lime border-3 border-black p-2.5 font-black uppercase text-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                {editingId ? "UPDATE_DATA.SYS" : "SAVE_DATA.SYS"}
-              </button>
-            </form>
-          </div>
-
-          {/* B. PANEL MANAGEMENT KATEGORI KUSTOM */}
-          <div className="bg-white border-3 border-black p-5 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <span className="font-bold uppercase text-sm block mb-3 border-b-2 border-black pb-2">MANAGE_CATEGORIES</span>
-            
-            {/* Form Tambah Kategori */}
-            <form onSubmit={handleAddCategory} className="flex gap-2 mb-4">
-              <input type="text" className="flex-1 border-2 border-black p-1.5 rounded bg-white font-bold uppercase placeholder:normal-case" placeholder="Nama kategori baru..." value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
-              <button type="submit" className="bg-retro-blue text-white px-3 border-2 border-black font-black">+</button>
-            </form>
-
-            {/* List Kategori Saat Ini */}
-            <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
-              {categories.map((cat) => (
-                <div key={cat.id} className="flex justify-between items-center p-1.5 border border-black bg-neutral-50 rounded">
-                  <span className="font-bold uppercase text-[10px]">{cat.name}</span>
-                  <button onClick={() => handleDeleteCategory(cat.id, cat.name)} className="text-red-500 font-bold px-1 hover:bg-red-100 rounded text-[9px]">HAPUS</button>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          <nav className="flex gap-3 flex-wrap">
+            {navLinks.map((l) => (
+              <a key={l.href} href={l.href}
+                className={`px-4 py-2 border-[3px] border-black font-bold rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all uppercase text-[10px] flex items-center justify-center
+                  ${l.active ? "bg-[var(--color-retro-orange)] text-white" : "bg-white text-black hover:bg-neutral-100"}`}
+              >
+                {l.label}
+              </a>
+            ))}
+          </nav>
         </div>
+      </motion.header>
 
-        {/* PANEL KANAN: LIVE DATABASE FEED LOG + SEARCHBAR */}
-        <section className="lg:col-span-2 bg-white border-3 border-black rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
-          {/* Panel header */}
-          <div className="bg-black text-white px-4 py-3 border-b-3 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <span className="font-bold uppercase text-sm tracking-wide">LIVE_DATABASE_FEED.LOG</span>
-            {/* SEARCHBAR DASHBOARD ADMIN */}
-            <div className="w-full sm:w-64 relative">
-              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                <Search className="w-3.5 h-3.5 text-neutral-400 block" />
-              </div>
-              <input
-                type="text"
-                className="w-full border-2 border-neutral-600 pl-8 pr-3 py-1.5 rounded bg-neutral-800 text-xs font-bold text-white placeholder:text-neutral-500 focus:outline-none focus:border-white"
-                placeholder="Cari judul / kategori log..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
+      <main className="max-w-7xl mx-auto space-y-10">
 
-          <div className="p-4 space-y-3 max-h-[680px] overflow-y-auto">
-            {loading ? (
-              <div className="py-16 text-center text-neutral-400 animate-pulse font-mono text-[11px]">
-                // BUFFERING_RECORDS...
-              </div>
-            ) : filteredProjects.length > 0 ? (
-              filteredProjects.map((p) => (
-                <div
-                  key={p.id}
-                  className="p-3 border-2 border-black rounded-lg bg-neutral-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-white transition-colors"
+        {loading ? (
+          <div className="py-24 text-center animate-pulse text-neutral-400 font-bold text-sm uppercase tracking-widest">// LOADING_SYSTEM_STATS...</div>
+        ) : (
+          <>
+            {/* ── STAT CARDS ── */}
+            <motion.section 
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+              }}
+              className="grid grid-cols-2 lg:grid-cols-4 gap-6"
+            >
+              {[
+                { label: "TOTAL PROYEK", value: stats.totalProjects, sub: `${stats.featuredProjects} featured`, bg: "bg-[var(--color-retro-blue)]", text: "text-white", rotate: "rotate-1" },
+                { label: "KATEGORI AKTIF", value: stats.categories.length, sub: "kategori unik", bg: "bg-[var(--color-retro-orange)]", text: "text-white", rotate: "-rotate-1" },
+                { label: "ACHIEVEMENTS", value: stats.totalAchievements, sub: `${stats.prestasi} prestasi`, bg: "bg-[var(--color-retro-lime)]", text: "text-black", rotate: "rotate-2" },
+                { label: "SERTIFIKASI", value: stats.sertifikasi, sub: "sertifikat kelulusan", bg: "bg-[var(--color-retro-pink)]", text: "text-white", rotate: "-rotate-2" },
+              ].map((card, i) => (
+                <motion.div 
+                  key={card.label} 
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0, transition: retroSpring }
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  className={`bg-white border-[3px] border-black rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden transition-transform`}
                 >
-                  {/* Left: image + info */}
-                  <div className="flex gap-3 items-start w-full min-w-0">
-                    <div className="w-20 h-14 bg-neutral-200 border-2 border-black rounded overflow-hidden shrink-0 flex items-center justify-center">
-                      {p.images && p.images.length > 0 ? (
-                        <Image src={p.images[0]} alt="Preview" width={80} height={56} unoptimized className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-[8px] text-neutral-400 font-bold">NO_IMG</span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-black text-sm uppercase leading-tight">{p.title}</span>
-                        {p.is_featured && (
-                          <span className="text-[8px] font-black uppercase bg-retro-yellow border border-black px-1.5 py-0.5 rounded text-black">⭐ FEATURED</span>
-                        )}
-                        <span className={`text-[8px] text-white px-1.5 py-0.5 rounded border border-black font-bold uppercase ${p.color_class || "bg-neutral-800"}`}>
-                          {p.category}
-                        </span>
-                      </div>
-                      <p className="text-neutral-500 font-sans text-xs line-clamp-1 mb-1.5">{p.description}</p>
-                      {p.tags && p.tags.length > 0 && (
-                        <div className="flex gap-1 flex-wrap">
-                          {p.tags.slice(0, 4).map((tag: string, i: number) => (
-                            <span key={i} className="font-mono text-[8px] font-bold text-neutral-500 bg-neutral-100 border border-neutral-300 px-1.5 py-0.5 rounded uppercase">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                  <div className={`${card.bg} ${card.text} px-4 py-3 font-black text-[10px] uppercase tracking-widest border-b-[3px] border-black flex justify-between items-center`}>
+                    {card.label}
+                    <div className="w-2 h-2 rounded-full border border-black bg-white opacity-50" />
                   </div>
+                  <div className="px-5 py-6 relative">
+                    <span className="font-syne text-5xl font-black">{card.value}</span>
+                    <p className="text-black font-bold text-[10px] mt-2 uppercase bg-neutral-200 inline-block px-2 py-1 rounded border border-black">{card.sub}</p>
+                    {/* Decorative Sticker */}
+                    <div className={`absolute top-4 right-4 text-3xl opacity-20 ${card.rotate}`}>*</div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.section>
 
-                  {/* Right: actions */}
-                  <div className="flex gap-2 shrink-0 self-end sm:self-center">
-                    <button
-                      onClick={() => startEdit(p)}
-                      className="p-2 border-2 border-black rounded bg-white hover:bg-retro-lime transition-all shadow-[2px_2px_0_rgba(0,0,0,1)]"
-                      title="Edit"
-                    >
-                      <PenSquare className="w-4 h-4 text-black block" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="p-2 border-2 border-black rounded bg-white hover:bg-retro-pink transition-all shadow-[2px_2px_0_rgba(0,0,0,1)]"
-                      title="Hapus"
-                    >
-                      <Trash className="w-4 h-4 text-black block" />
-                    </button>
-                  </div>
+            {/* ── QUICK LINKS ── */}
+            <motion.section 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={retroSpring}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+            >
+              <a href="/admin/projects" className="group bg-white border-[3px] border-black rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] p-6 flex items-center gap-6 active:translate-x-[4px] active:translate-y-[4px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer">
+                <div className="bg-[var(--color-retro-yellow)] p-4 border-[3px] border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:-rotate-3 transition-transform">
+                  <Briefcase className="w-8 h-8 text-black block" />
                 </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <span className="font-mono text-[10px] text-neutral-500 uppercase mb-2">ERROR 404: RECORDS_NOT_FOUND</span>
-                <span className="font-mono text-xs text-neutral-400">Tidak ada proyek yang cocok dengan pencarian Anda.</span>
-              </div>
-            )}
-          </div>
-        </section>
+                <div className="flex-1">
+                  <span className="font-black text-lg uppercase block tracking-tight font-syne">Kelola Proyek</span>
+                  <span className="text-neutral-600 font-bold mt-1 block uppercase text-[10px]">{stats.totalProjects} data · Tambah & Edit</span>
+                </div>
+                <div className="bg-black text-white p-2 rounded-full border-2 border-black group-hover:scale-110 transition-transform">
+                  <span className="font-black">→</span>
+                </div>
+              </a>
+              
+              <a href="/admin/achievements" className="group bg-white border-[3px] border-black rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] p-6 flex items-center gap-6 active:translate-x-[4px] active:translate-y-[4px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer">
+                <div className="bg-[var(--color-retro-lime)] p-4 border-[3px] border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:rotate-3 transition-transform">
+                  <Trophy className="w-8 h-8 text-black block" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-black text-lg uppercase block tracking-tight font-syne">Kelola Achievements</span>
+                  <span className="text-neutral-600 font-bold mt-1 block uppercase text-[10px]">{stats.totalAchievements} data · Tambah & Edit</span>
+                </div>
+                <div className="bg-black text-white p-2 rounded-full border-2 border-black group-hover:scale-110 transition-transform">
+                  <span className="font-black">→</span>
+                </div>
+              </a>
+            </motion.section>
 
+            {/* ── BOTTOM GRID ── */}
+            <motion.section 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={retroSpring}
+              className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            >
+              {/* Category breakdown */}
+              <div className="bg-white border-[3px] border-black rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col">
+                <div className="bg-black text-white px-5 py-3 font-bold uppercase text-[10px] tracking-widest border-b-[3px] border-black">
+                  CATEGORY_BREAKDOWN.LOG
+                </div>
+                <div className="p-6 space-y-4 flex-1">
+                  {stats.categories.length > 0 ? stats.categories.map((cat, i) => {
+                    const pct = stats.totalProjects > 0 ? Math.round((cat.count / stats.totalProjects) * 100) : 0;
+                    return (
+                      <div key={cat.name} className="relative">
+                        <div className="flex justify-between mb-2">
+                          <span className="font-black uppercase text-[11px]">{cat.name}</span>
+                          <span className="font-bold text-[10px] bg-neutral-200 px-1.5 py-0.5 rounded border border-black">{cat.count} ({pct}%)</span>
+                        </div>
+                        <div className="w-full bg-neutral-100 border-[2px] border-black rounded-full h-3 overflow-hidden shadow-inner">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 1, delay: i * 0.1, type: "spring" }}
+                            className="h-full bg-[var(--color-retro-orange)] border-r-2 border-black"
+                          />
+                        </div>
+                      </div>
+                    );
+                  }) : <p className="text-neutral-400 font-bold uppercase text-[10px]">// No categories yet</p>}
+                </div>
+              </div>
+
+              {/* Recent Projects */}
+              <div className="bg-white border-[3px] border-black rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col">
+                <div className="bg-black text-white px-5 py-3 font-bold uppercase text-[10px] tracking-widest border-b-[3px] border-black flex justify-between items-center">
+                  <span>RECENT_PROJECTS</span>
+                  <a href="/admin/projects" className="text-[10px] text-[var(--color-retro-yellow)] hover:underline">LIHAT SEMUA →</a>
+                </div>
+                <div className="p-4 space-y-3 flex-1">
+                  {stats.recentProjects.map((p) => (
+                    <div key={p.id} className="group flex items-center gap-3 p-3 bg-[var(--color-retro-bg)] border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-white transition-colors">
+                      <div className={`w-3 h-3 rounded-full border-2 border-black ${p.color_class ? p.color_class.replace("bg-[var(--color-", "bg-").replace(")]", "") : "bg-retro-blue"}`} />
+                      <span className="font-black uppercase text-[10px] truncate flex-1">{p.title}</span>
+                      {p.is_featured && <span className="text-lg" title="Featured">⭐</span>}
+                      <span className="text-[9px] bg-white border-2 border-black px-1.5 py-0.5 rounded font-bold uppercase shrink-0">{p.category}</span>
+                    </div>
+                  ))}
+                  {stats.recentProjects.length === 0 && (
+                    <p className="text-neutral-400 font-bold uppercase p-2 text-[10px]">// No projects yet</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Achievements */}
+              <div className="bg-white border-[3px] border-black rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col">
+                <div className="bg-black text-white px-5 py-3 font-bold uppercase text-[10px] tracking-widest border-b-[3px] border-black flex justify-between items-center">
+                  <span>RECENT_ACHIEVEMENTS</span>
+                  <a href="/admin/achievements" className="text-[10px] text-[var(--color-retro-yellow)] hover:underline">LIHAT SEMUA →</a>
+                </div>
+                <div className="p-4 space-y-3 flex-1">
+                  {stats.recentAchievements.map((a) => (
+                    <div key={a.id} className="group flex items-center gap-3 p-3 bg-[var(--color-retro-bg)] border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-white transition-colors">
+                      <div className={`w-3 h-3 rounded-full border-2 border-black ${a.color_class ? a.color_class.replace("bg-[var(--color-", "bg-").replace(")]", "") : "bg-retro-pink"}`} />
+                      <span className="font-black uppercase text-[10px] truncate flex-1">{a.title}</span>
+                      <span className={`text-[10px] font-black px-2 py-0.5 border-2 border-black rounded text-black shrink-0 ${a.type === "PRESTASI" ? "bg-[var(--color-retro-lime)]" : "bg-[var(--color-retro-pink)]"}`}>
+                        {a.type === "PRESTASI" ? "🏆 PRES" : "📜 SERT"}
+                      </span>
+                    </div>
+                  ))}
+                  {stats.recentAchievements.length === 0 && (
+                    <p className="text-neutral-400 font-bold uppercase p-2 text-[10px]">// No achievements yet</p>
+                  )}
+                </div>
+              </div>
+
+            </motion.section>
+          </>
+        )}
       </main>
     </div>
   );

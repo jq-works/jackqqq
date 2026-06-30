@@ -80,10 +80,12 @@ export default function Achievements() {
         .order("created_at", { ascending: false });
 
       if (data && data.length > 0) {
-        const mapped = data.map((item: any) => ({
+        const mapped = data.map((item: any, index: number) => ({
           ...item,
           id: item.id_display || `JQ-${item.id}`,
-          color: item.color_class || "bg-retro-yellow",
+          color: item.color_class 
+            ? item.color_class.replace("bg-[var(--color-", "bg-").replace(")]", "") 
+            : ["bg-retro-orange", "bg-retro-yellow", "bg-retro-lime", "bg-retro-blue", "bg-retro-pink"][index % 5],
           image: item.image_url || (item.images && item.images[0]) || "/placeholder.jpg"
         }));
         setListPencapaian(mapped);

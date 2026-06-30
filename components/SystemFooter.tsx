@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { Terminal, Heart } from "pixelarticons/react";
 import { playSynthSound } from "@/lib/audio";
+import { supabase } from "@/lib/supabase";
 
 export default function SystemFooter() {
   const [systemLoad, setSystemLoad] = useState(12);
   
   // 1. STATE MANAGEMENT UNTUK PERSISTENT LIKE SYSTEM
   const [hasLiked, setHasLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(128); // Base count awal
+  const [likeCount, setLikeCount] = useState(128); // Base count awal jika db belum termuat
 
   // Efek fluktuasi RAM/CPU tiruan untuk menghidupkan suasana OS
   useEffect(() => {
@@ -17,14 +18,69 @@ export default function SystemFooter() {
       setSystemLoad(Math.floor(Math.random() * 15) + 8);
     }, 3000);
 
-    // Cek pangkalan data lokal browser saat komponen dimuat
-    const localLiked = localStorage.getItem("portfolio_liked");
-    if (localLiked === "true") {
-      setHasLiked(true);
-      setLikeCount(129); // Visual count naik jika sudah pernah like
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch total likes & status user
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchLikesData() {
+      // 1. Ambil total likes
+      const { count, error } = await supabase
+        .from("likes")
+        .select("*", { count: "exact", head: true });
+
+      if (error) {
+        console.error("Gagal memuat data likes dari Supabase:", error.message);
+      } else if (count !== null && isMounted) {
+        setLikeCount(count);
+      }
+
+      // 2. Cek apakah user ini sudah pernah me-like website
+      const savedLikeId = localStorage.getItem("portfolio_like_id");
+      if (savedLikeId) {
+        const { data, error: fetchErr } = await supabase
+          .from("likes")
+          .select("id")
+          .eq("id", savedLikeId)
+          .maybeSingle();
+
+        if (isMounted) {
+          if (data) {
+            setHasLiked(true);
+          } else {
+            // Jika ID di local storage tidak ada di db (misal db di-reset)
+            localStorage.removeItem("portfolio_like_id");
+            setHasLiked(false);
+          }
+        }
+      }
     }
 
-    return () => clearInterval(interval);
+    fetchLikesData();
+
+    // Supabase Realtime Subscription untuk update like count instan
+    const channel = supabase
+      .channel("realtime_likes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "likes" },
+        async () => {
+          const { count, error } = await supabase
+            .from("likes")
+            .select("*", { count: "exact", head: true });
+          if (!error && count !== null && isMounted) {
+            setLikeCount(count);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleSystemClick = (type: string) => {
@@ -37,21 +93,49 @@ export default function SystemFooter() {
   };
 
   // 2. HANDLER KLIK TOMBOL LIKE PORTFOLIO
-  const handleLikeClick = () => {
+  const handleLikeClick = async () => {
     if (!hasLiked) {
-      localStorage.setItem("portfolio_liked", "true");
-      setHasLiked(true);
-      setLikeCount((prev) => prev + 1);
-      
-      // Efek akord naik retro gembira
-      playSynthSound("sine", 523.25, 0.06); 
-      setTimeout(() => playSynthSound("sine", 659.25, 0.06), 60); 
-      setTimeout(() => playSynthSound("sine", 783.99, 0.12), 120); 
+      // Masukkan like baru ke database
+      const { data, error } = await supabase
+        .from("likes")
+        .insert([{}])
+        .select();
+
+      if (error) {
+        console.error("Gagal mengirim like ke Supabase:", error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const newLikeId = data[0].id;
+        localStorage.setItem("portfolio_like_id", newLikeId);
+        setHasLiked(true);
+        setLikeCount((prev) => prev + 1);
+
+        // Efek akord naik retro gembira
+        playSynthSound("sine", 523.25, 0.06); 
+        setTimeout(() => playSynthSound("sine", 659.25, 0.06), 60); 
+        setTimeout(() => playSynthSound("sine", 783.99, 0.12), 120); 
+      }
     } else {
-      localStorage.removeItem("portfolio_liked");
-      setHasLiked(false);
-      setLikeCount((prev) => prev - 1);
-      playSynthSound("sine", 392.00, 0.12); // Nada turun pembatalan
+      const savedLikeId = localStorage.getItem("portfolio_like_id");
+      if (savedLikeId) {
+        // Hapus like dari database
+        const { error } = await supabase
+          .from("likes")
+          .delete()
+          .eq("id", savedLikeId);
+
+        if (error) {
+          console.error("Gagal menghapus like dari Supabase:", error.message);
+          return;
+        }
+
+        localStorage.removeItem("portfolio_like_id");
+        setHasLiked(false);
+        setLikeCount((prev) => prev - 1);
+        playSynthSound("sine", 392.00, 0.12); // Nada turun pembatalan
+      }
     }
   };
 
